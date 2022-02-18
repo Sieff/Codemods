@@ -55,11 +55,8 @@ export default (fileInfo, api) => {
             id: {
                 name: calledFunction.id.name
             }
-        }).find(j.BlockStatement).at(0).get(0).node.body
-        return nodes.map((node, idx) => {
-            // TODO: Immer ganze Zeile? newlines!
-            return j(j(node).toSource()).get(0).node.program.body[0];
-        });
+        }).find(j.BlockStatement).get(0).node
+        return j(j(nodes).toSource()).get(0).node.program.body[0].body;
     });
 
     // Gesamten Ausdruck der bekannten Aufrufe
