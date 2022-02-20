@@ -44,7 +44,6 @@ export default (fileInfo, api) => {
             return false;
         }
         const noReturnstatement = j(func).find(j.ReturnStatement).size() === 0;
-        debugger;
         const functionUsageUnderThreshold = functionsCountDict[func.id.name] && functionsCountDict[func.id.name] <= functionUsageThreshold;
         return functionUsageUnderThreshold && noReturnstatement;
     });
@@ -72,7 +71,6 @@ export default (fileInfo, api) => {
     // Gesamten Ausdruck der bekannten Aufrufe
     const parentStatements = knownCalls.map((path) => path.parent);
 
-    debugger;
     // Erstellen von Dictionaries zum zuordnen von Parametern zu Argumenten
     const paramToArgumentDicts = [];
     parentStatements.forEach((nodePath, idx) => {
