@@ -27,26 +27,36 @@ export default (fileInfo, api) => {
             }
         })
         if (declarationCollection.length === 0) {
-            unknownCallsIdx.push(idx);
-            return
+            unknownCallsIdx.push(true);
+            functions.push(false);
+        } else {
+            unknownCallsIdx.push(false);
+            functions.push(declarationCollection.get(0).node);
         }
-        functions.push(declarationCollection.get(0).node);
     });
 
     // Zählen der Funktionsaufrufe
     const functionsCountDict = countFunctions(functions);
 
     // Prüfen, ob Funktionsaufrufe unter Threshold sind
-    const placeFunctionInline = functions.map(func => functionsCountDict[func.id.name] <= functionUsageThreshold);
+    const placeFunctionInline = functions.map(func => {
+        if (!func) {
+            return false;
+        }
+        const noReturnstatement = j(func).find(j.ReturnStatement).size() === 0;
+        debugger;
+        const functionUsageUnderThreshold = functionsCountDict[func.id.name] && functionsCountDict[func.id.name] <= functionUsageThreshold;
+        return functionUsageUnderThreshold && noReturnstatement;
+    });
 
     // Aufrufe die zu ersetzen sind Filtern
     const knownCalls = calls.filter((call, idx) => {
-        return !unknownCallsIdx.includes(idx) && placeFunctionInline[idx];
+        return !unknownCallsIdx[idx] && placeFunctionInline[idx];
     });
 
     // Funktionen Filtern, ob sie ersetzt werden soll
     const filteredFunctions = functions.filter((func, idx) => {
-        return placeFunctionInline[idx];
+        return !unknownCallsIdx[idx] && placeFunctionInline[idx];
     });
 
     // Zeilen des Funktionskörpers kopieren
@@ -62,6 +72,7 @@ export default (fileInfo, api) => {
     // Gesamten Ausdruck der bekannten Aufrufe
     const parentStatements = knownCalls.map((path) => path.parent);
 
+    debugger;
     // Erstellen von Dictionaries zum zuordnen von Parametern zu Argumenten
     const paramToArgumentDicts = [];
     parentStatements.forEach((nodePath, idx) => {
@@ -118,6 +129,9 @@ function countFunctions(functions) {
     const dict = {};
 
     functions.forEach(functionNode => {
+        if (!functionNode) {
+            return;
+        }
         if (dict[functionNode.id.name]) {
             dict[functionNode.id.name] = dict[functionNode.id.name] + 1;
         } else {

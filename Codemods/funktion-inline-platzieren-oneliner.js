@@ -27,10 +27,12 @@ export default (fileInfo, api) => {
             }
         })
         if (declarationCollection.length === 0) {
-            unknownCallsIdx.push(idx);
-            return
+            unknownCallsIdx.push(true);
+            functions.push(false);
+        } else {
+            unknownCallsIdx.push(false);
+            functions.push(declarationCollection.get(0).node);
         }
-        functions.push(declarationCollection.get(0).node);
     });
 
     // Zählen der Funktionsaufrufe
@@ -38,6 +40,9 @@ export default (fileInfo, api) => {
 
     // Prüfen, ob Funktionsaufrufe unter Threshold sind
     const placeFunctionInline = functions.map(func => {
+        if (!func) {
+            return false;
+        }
         const onlyOneReturnstatement = func.body.body[0] && func.body.body[0].type && func.body.body[0].type === 'ReturnStatement';
         const functionUsageUnderThreshold = functionsCountDict[func.id.name] && functionsCountDict[func.id.name] <= functionUsageThreshold;
         return onlyOneReturnstatement && functionUsageUnderThreshold;
@@ -45,12 +50,12 @@ export default (fileInfo, api) => {
 
     // Aufrufe die zu ersetzen sind Filtern
     const knownCalls = calls.filter((call, idx) => {
-        return !unknownCallsIdx.includes(idx) && placeFunctionInline[idx];
+        return !unknownCallsIdx[idx] && placeFunctionInline[idx];
     });
 
     // Funktionen Filtern, ob sie ersetzt werden soll
     const filteredFunctions = functions.filter((func, idx) => {
-        return placeFunctionInline[idx];
+        return !unknownCallsIdx[idx] && placeFunctionInline[idx];
     });
 
     // Zeilen des Funktionskörpers kopieren
@@ -70,7 +75,6 @@ export default (fileInfo, api) => {
         const { node } = nodePath;
         const callerArguments = node.arguments;
         const functionParams = filteredFunctions[idx].params;
-        debugger;
         assert(functionParams.length === callerArguments.length, "Arguments and Params don't match length.");
         paramToArgumentDicts.push(createParamToArgumentDict(functionParams, callerArguments));
     });
@@ -80,10 +84,8 @@ export default (fileInfo, api) => {
         return functionBodyNodes[idx];
     });
 
-    console.log(functionBodyNodes);
     // Parameter durch Argumente in eingesetzten Zeilen ersetzen
     functionBodyNodes.forEach((path, idx) => {
-        debugger;
         j(path).find(j.Identifier).replaceWith((nodePath, i) => {
             const { node } = nodePath;
 
@@ -120,6 +122,9 @@ function countFunctions(functions) {
     const dict = {};
 
     functions.forEach(functionNode => {
+        if (!functionNode) {
+            return;
+        }
         if (dict[functionNode.id.name]) {
             dict[functionNode.id.name] = dict[functionNode.id.name] + 1;
         } else {

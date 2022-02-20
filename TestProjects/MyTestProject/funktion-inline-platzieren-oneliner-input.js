@@ -1,17 +1,51 @@
-class Driver {
-    constructor(_numberOfLateDeliveries) {
-        this.numberOfLateDeliveries = _numberOfLateDeliveries;
-    }
+function dontPlaceFunctionHere(arg1) {
+    const array = [];
+    dontReplaceThisFunction(array, arg1)
 }
 
-function getRating(drv, drv2) {
-    return moreThanFiveLateDeliveries(drv) ? 5 : 1;
+function dontReplaceThisFunction(arr, arg2) {
+    arr.push(arg2);
 }
 
-function getRating2(drv, drv2) {
-    return moreThanFiveLateDeliveries(drv2) ? 5 : 1;
+function chainFunction0() {
+    const array = []
+    chainFunction1(array);
 }
 
-function moreThanFiveLateDeliveries(aDriver) {
-    return aDriver.numberOfLateDeliveries > 5;
+function chainFunction1(arr1) {
+    chainFunction2(arr1);
+}
+
+function chainFunction2(arr2) {
+    arr2.push(1);
+}
+
+function chainFunction3() {
+    return chainFunction4()
+}
+
+function chainFunction4() {
+    return chainFunction5();
+}
+
+function chainFunction5() {
+    return 'Das';
+}
+
+
+function placeFunctionHere(arg3) {
+    return replaceThisFunction(arg3);
+}
+
+function replaceThisFunction(arg4) {
+    return arg4 > 1 ? 'Wahr' : 'Falsch';
+}
+
+function dontPlaceFunctionHereAswell(arg5) {
+    return dontReplaceThisFunctionAswell(arg5);
+}
+
+function dontReplaceThisFunctionAswell(arg6) {
+    const a = arg6 + 1;
+    return a > 1 ? 'Wahr' : 'Falsch';
 }
