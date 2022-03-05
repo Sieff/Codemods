@@ -78,7 +78,7 @@ export default (fileInfo, api) => {
         const callerArguments = node.expression.arguments;
         const functionParams = filteredFunctions[idx].params;
         assert(functionParams.length === callerArguments.length, "Arguments and Params don't match length.");
-        paramToArgumentDicts.push(createParamToArgumentDict(functionParams, callerArguments));
+        paramToArgumentDicts.push(createParamToArgumentDict(functionParams, callerArguments, j));
     });
 
     // Zeilen der Funktion inplace einfügen
@@ -113,11 +113,11 @@ export default (fileInfo, api) => {
     return ast.toSource();
 };
 
-function createParamToArgumentDict(functionParams, callerArguments) {
+function createParamToArgumentDict(functionParams, callerArguments, j) {
     const dict = {};
 
     functionParams.forEach((param, idx) => {
-       dict[param.name] = callerArguments[idx].name;
+       dict[param.name] = j(callerArguments[idx]).toSource();
     });
 
     return dict;

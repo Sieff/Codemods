@@ -6,7 +6,7 @@ export default (fileInfo, api) => {
     const ast = j(fileInfo.source);
 
     // Die Anzahl an Funktionsaufrufen, die maximal existieren soll, wenn eine Funktion inline platziert werden soll
-    const functionUsageThreshold = 2;
+    const functionUsageThreshold = 1;
 
     // Finde alle Callexpressions mit Bedingung
     // Für jede Expression finde die zugehörige Funktion
@@ -76,7 +76,7 @@ export default (fileInfo, api) => {
         const callerArguments = node.arguments;
         const functionParams = filteredFunctions[idx].params;
         assert(functionParams.length === callerArguments.length, "Arguments and Params don't match length.");
-        paramToArgumentDicts.push(createParamToArgumentDict(functionParams, callerArguments));
+        paramToArgumentDicts.push(createParamToArgumentDict(functionParams, callerArguments, j));
     });
 
     // Zeilen der Funktion inplace einfügen
@@ -108,11 +108,11 @@ export default (fileInfo, api) => {
     return ast.toSource();
 };
 
-function createParamToArgumentDict(functionParams, callerArguments) {
+function createParamToArgumentDict(functionParams, callerArguments, j) {
     const dict = {};
 
     functionParams.forEach((param, idx) => {
-        dict[param.name] = callerArguments[idx].name;
+        dict[param.name] = j(callerArguments[idx]).toSource();
     });
 
     return dict;
