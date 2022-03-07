@@ -1,9 +1,11 @@
+import {CodemodService} from "./codemod-service";
 var assert = require('assert');
 var describe = require('jscodeshift-helper').describe;
 
 export default (fileInfo, api) => {
     const j = api.jscodeshift;
     const ast = j(fileInfo.source);
+    const codemodService = new CodemodService(j);
 
     // Die Anzahl an Funktionsaufrufen, die maximal existieren soll, wenn eine Funktion inline platziert werden soll
     const functionUsageThreshold = 1;
@@ -36,7 +38,7 @@ export default (fileInfo, api) => {
     });
 
     // Zählen der Funktionsaufrufe
-    const functionsCountDict = countFunctions(functions);
+    const functionsCountDict = codemodService.countFunctions(functions);
 
     // Prüfen, ob Funktionsaufrufe unter Threshold sind
     const placeFunctionInline = functions.map(func => {
@@ -78,7 +80,7 @@ export default (fileInfo, api) => {
         const callerArguments = node.expression.arguments;
         const functionParams = filteredFunctions[idx].params;
         assert(functionParams.length === callerArguments.length, "Arguments and Params don't match length.");
-        paramToArgumentDicts.push(createParamToArgumentDict(functionParams, callerArguments, j));
+        paramToArgumentDicts.push(codemodService.createParamToArgumentDict(functionParams, callerArguments));
     });
 
     // Zeilen der Funktion inplace einfügen
@@ -112,30 +114,3 @@ export default (fileInfo, api) => {
 
     return ast.toSource();
 };
-
-function createParamToArgumentDict(functionParams, callerArguments, j) {
-    const dict = {};
-
-    functionParams.forEach((param, idx) => {
-       dict[param.name] = j(callerArguments[idx]).toSource();
-    });
-
-    return dict;
-}
-
-function countFunctions(functions) {
-    const dict = {};
-
-    functions.forEach(functionNode => {
-        if (!functionNode) {
-            return;
-        }
-        if (dict[functionNode.id.name]) {
-            dict[functionNode.id.name] = dict[functionNode.id.name] + 1;
-        } else {
-            dict[functionNode.id.name] = 1;
-        }
-    });
-
-    return dict;
-}
