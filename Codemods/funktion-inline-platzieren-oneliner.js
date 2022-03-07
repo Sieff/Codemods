@@ -5,7 +5,7 @@ var describe = require('jscodeshift-helper').describe;
 export default (fileInfo, api) => {
     const j = api.jscodeshift;
     const ast = j(fileInfo.source);
-    const codemodService = new CodemodService(j);
+    const codemodService = new CodemodService(j, ast);
 
     // Die Anzahl an Funktionsaufrufen, die maximal existieren soll, wenn eine Funktion inline platziert werden soll
     const functionUsageThreshold = 1;

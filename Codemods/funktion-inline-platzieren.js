@@ -4,8 +4,7 @@ var describe = require('jscodeshift-helper').describe;
 
 export default (fileInfo, api) => {
     const j = api.jscodeshift;
-    const ast = j(fileInfo.source);
-    const codemodService = new CodemodService(j);
+    const codemodService = new CodemodService(j, j(fileInfo.source));
 
     // Die Anzahl an Funktionsaufrufen, die maximal existieren soll, wenn eine Funktion inline platziert werden soll
     const functionUsageThreshold = 1;
@@ -17,100 +16,72 @@ export default (fileInfo, api) => {
     // Lösche Funktion
 
     // Alle Funktionsaufrufe
-    const calls = ast.find(j.CallExpression);
+    const calls = codemodService.ast.find(j.CallExpression);
 
-    // Funktionen und unbekannte Funktionen sammeln
-    const functions = [];
-    const unknownCallsIdx = [];
-    calls.forEach((caller, idx) => {
-        const declarationCollection = ast.find(j.FunctionDeclaration, {
-            id: {
-                name: caller.node.callee.name
+    if (calls.length === 0) {
+        return codemodService.ast.toSource();
+    }
+
+    calls.forEach((call) => {
+        // Finde zum aktuellen call alle calls mit gleichem callee name
+        const callNode = call.node;
+        const currentCallCollection = codemodService.ast.find(j.CallExpression, {
+            callee: {
+                name: callNode.callee.name
             }
-        })
-        if (declarationCollection.length === 0) {
-            unknownCallsIdx.push(true);
-            functions.push(false);
-        } else {
-            unknownCallsIdx.push(false);
-            functions.push(declarationCollection.get(0).node);
+        });
+
+        if (currentCallCollection.length === 0) {
+            return;
         }
-    });
 
-    // Zählen der Funktionsaufrufe
-    const functionsCountDict = codemodService.countFunctions(functions);
+        // Nimm den erstbesten call aus den gefundenen gleichen calls
+        const newCall = currentCallCollection.get(0);
 
-    // Prüfen, ob Funktionsaufrufe unter Threshold sind
-    const placeFunctionInline = functions.map(func => {
-        if (!func) {
-            return false;
-        }
-        const noReturnstatement = j(func).find(j.ReturnStatement).size() === 0;
-        const functionUsageUnderThreshold = functionsCountDict[func.id.name] && functionsCountDict[func.id.name] <= functionUsageThreshold;
-        return functionUsageUnderThreshold && noReturnstatement;
-    });
-
-    // Aufrufe die zu ersetzen sind Filtern
-    const knownCalls = calls.filter((call, idx) => {
-        return !unknownCallsIdx[idx] && placeFunctionInline[idx];
-    });
-
-    // Funktionen Filtern, ob sie ersetzt werden soll
-    const filteredFunctions = functions.filter((func, idx) => {
-        return !unknownCallsIdx[idx] && placeFunctionInline[idx];
-    });
-
-    // Zeilen des Funktionskörpers kopieren
-    const functionBodyNodes = filteredFunctions.map(calledFunction => {
-        const nodes = ast.find(j.FunctionDeclaration, {
+        // Finde die Funktionsdeklaration zum neuen call
+        const calledFunctionCollection = codemodService.ast.find(j.FunctionDeclaration, {
             id: {
-                name: calledFunction.id.name
+                name: newCall.node.callee.name
             }
-        }).find(j.BlockStatement).get(0).node
-        return j(j(nodes).toSource()).get(0).node.program.body[0].body;
-    });
+        });
 
-    // Gesamten Ausdruck der bekannten Aufrufe
-    const parentStatements = knownCalls.map((path) => path.parent);
+        // Gibt es die Funktion? || Wird die Funktion nur unter dem Threshold oft genutzt?
+        if (calledFunctionCollection.length === 0 || calledFunctionCollection.length > functionUsageThreshold) {
+            return;
+        }
 
-    // Erstellen von Dictionaries zum zuordnen von Parametern zu Argumenten
-    const paramToArgumentDicts = [];
-    parentStatements.forEach((nodePath, idx) => {
-        const { node } = nodePath;
-        const callerArguments = node.expression.arguments;
-        const functionParams = filteredFunctions[idx].params;
-        assert(functionParams.length === callerArguments.length, "Arguments and Params don't match length.");
-        paramToArgumentDicts.push(codemodService.createParamToArgumentDict(functionParams, callerArguments));
-    });
+        // Hole die Funktion aus der Sammlung
+        const calledFunction = calledFunctionCollection.get(0).node;
 
-    // Zeilen der Funktion inplace einfügen
-    parentStatements.insertBefore((nodePath, idx) => {
-        return functionBodyNodes[idx];
-    });
+        // Hat die Funktion auch kein Returnstatement?
+        if (j(calledFunction).find(j.ReturnStatement).size() !== 0) {
+            return;
+        }
 
-    // Parameter durch Argumente in eingesetzten Zeilen ersetzen
-    functionBodyNodes.forEach((path, idx) => {
-        j(path).find(j.Identifier).replaceWith((nodePath) => {
+        const functionBody = codemodService.getFunctionBody(calledFunction);
+        const parentStatement = newCall.parent;
+        const paramToArgumentDict = codemodService.getParamToArgumentDict(calledFunction, parentStatement, true);
+
+        j(parentStatement).insertBefore(functionBody);
+
+        j(functionBody).find(j.Identifier).replaceWith((nodePath) => {
             const { node } = nodePath;
 
-            if (paramToArgumentDicts[idx][node.name]) {
-                node.name = paramToArgumentDicts[idx][node.name];
+            if (paramToArgumentDict[node.name]) {
+                node.name = paramToArgumentDict[node.name];
             }
+
             return node;
         });
-    });
 
-    // Ursprünglichen Aufruf entfernen
-    parentStatements.remove();
+        j(parentStatement).remove();
 
-    // Ursprüngliche Funktion entfernen
-    filteredFunctions.forEach(calledFunction => {
-        ast.find(j.FunctionDeclaration, {
+        codemodService.ast.find(j.FunctionDeclaration, {
             id: {
                 name: calledFunction.id.name
             }
         }).remove();
     });
 
-    return ast.toSource();
+    return codemodService.ast.toSource();
 };
