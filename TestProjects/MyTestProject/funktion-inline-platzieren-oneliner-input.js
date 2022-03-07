@@ -41,6 +41,25 @@ function replaceThisFunction(arg4) {
     return arg4 > 1 ? 'Wahr' : 'Falsch';
 }
 
+function placeFunctionWithObjectMember(obj1) {
+    return replaceThisFunctionWithObjectMember(obj1.obj);
+}
+
+function replaceThisFunctionWithObjectMember(obj2) {
+    return obj2 > 1 ? 'Wahr' : 'Falsch';
+}
+
+function placeFunctionWithArrowFunction(obj3) {
+    return replaceThisFunctionWithArrowFunction((x) => {
+        const y = 3;
+        return x+y;
+    });
+}
+
+function replaceThisFunctionWithArrowFunction(obj4) {
+    return obj4;
+}
+
 function dontPlaceFunctionHereAswell(arg5) {
     return dontReplaceThisFunctionAswell(arg5);
 }

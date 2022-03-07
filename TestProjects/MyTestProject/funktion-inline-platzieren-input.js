@@ -1,10 +1,19 @@
 function placeFunctionHere(arg1) {
     const array = [];
-    replaceThisFunction(array, arg1)
+    replaceThisFunction(array, arg1);
 }
 
 function replaceThisFunction(arr, arg2) {
     arr.push(arg2);
+}
+
+function placeFunctionHere2(obj1) {
+    const array = [];
+    replaceThisFunction2(array, obj1.obj);
+}
+
+function replaceThisFunction2(arr, obj2) {
+    arr.push(obj2);
 }
 
 function chainFunction0() {
