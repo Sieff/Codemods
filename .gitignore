@@ -147,4 +147,10 @@ dist
 ./TestProjects/vue
 ./TestProjects/Vue3
 ./TestProjects/mithril
-./TestProjects
+TestProjects/filepond/
+TestProjects/jquery/
+TestProjects/mithril/
+TestProjects/ramda/
+TestProjects/three/
+TestProjects/vue/
+TestProjects/Vue3/
