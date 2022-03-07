@@ -31,7 +31,8 @@ export default (fileInfo, api) => {
             }
         });
 
-        if (currentCallCollection.length === 0) {
+        // Gibt es einen call? || Ist die Anzahl an calls unter dem Threshold?
+        if (currentCallCollection.size() === 0 || currentCallCollection.size() > functionUsageThreshold) {
             return;
         }
 
@@ -46,7 +47,7 @@ export default (fileInfo, api) => {
         });
 
         // Gibt es die Funktion? || Wird die Funktion nur unter dem Threshold oft genutzt?
-        if (calledFunctionCollection.length === 0 || calledFunctionCollection.length > functionUsageThreshold) {
+        if (calledFunctionCollection.size() === 0) {
             return;
         }
 
@@ -58,23 +59,32 @@ export default (fileInfo, api) => {
             return;
         }
 
-        const functionBody = codemodService.getFunctionBody(calledFunction);
-        const parentStatement = newCall.parent;
-        const paramToArgumentDict = codemodService.getParamToArgumentDict(calledFunction, parentStatement, true);
-
-        j(parentStatement).insertBefore(functionBody);
-
-        j(functionBody).find(j.Identifier).replaceWith((nodePath) => {
-            const { node } = nodePath;
-
-            if (paramToArgumentDict[node.name]) {
-                node.name = paramToArgumentDict[node.name];
-            }
-
-            return node;
+        const functionBodies = currentCallCollection.paths().map(() => codemodService.getFunctionBody(calledFunction));
+        const parentStatements = currentCallCollection.map((call) => call.parent);
+        const paramToArgumentDicts = [];
+        currentCallCollection.forEach((call, idx) => {
+            paramToArgumentDicts.push(codemodService.getParamToArgumentDict(calledFunction, parentStatements.get(idx), true));
         });
 
-        j(parentStatement).remove();
+        parentStatements.forEach((path, idx) => {
+            functionBodies[idx].forEach((node, i) => {
+                path.insertBefore(functionBodies[idx][i]);
+            });
+        });
+
+        functionBodies.forEach((node, idx) => {
+            j(node).find(j.Identifier).replaceWith((nodePath) => {
+                const { node } = nodePath;
+
+                if (paramToArgumentDicts[idx][node.name]) {
+                    node.name = paramToArgumentDicts[idx][node.name];
+                }
+
+                return node;
+            });
+        })
+
+        parentStatements.remove();
 
         codemodService.ast.find(j.FunctionDeclaration, {
             id: {

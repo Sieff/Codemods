@@ -16,7 +16,12 @@ function replaceThisFunction2(arr, obj2) {
     arr.push(obj2);
 }
 
-function chainFunction0() {
+function replaceChainFunctions() {
+    const array = []
+    chainFunction1(array);
+}
+
+function replaceMultiChainFunctions() {
     const array = []
     chainFunction1(array);
 }
@@ -25,19 +30,23 @@ function chainFunction1(arr1) {
     chainFunction2(arr1);
 }
 
-function chainFunction2(arr2) {
+function chainFunction2(arr1) {
+    chainFunction3(arr1);
+}
+
+function chainFunction3(arr2) {
     arr2.push(1);
 }
 
-function chainFunction3() {
-    return chainFunction4()
-}
-
-function chainFunction4() {
-    return chainFunction5();
+function dontRaplaceThisChainFunction4() {
+    return chainFunction5()
 }
 
 function chainFunction5() {
+    return chainFunction6();
+}
+
+function chainFunction6() {
     return 'Das';
 }
 
