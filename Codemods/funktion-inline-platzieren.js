@@ -30,9 +30,15 @@ export default (fileInfo, api) => {
                 name: callNode.callee.name
             }
         });
+        const similarIdentifierCollection = codemodService.ast.find(j.Identifier, {
+            name: callNode.callee.name
+        });
+
+        // Mögliche calls in Form einer übergebenen callback Funktion (Alle Identifier mit gleichem Namen - Anzahl der richtigen calls - Funktionsdeklaration)
+        const possibleOtherCalls = similarIdentifierCollection.size() - currentCallCollection.size() - 1
 
         // Gibt es einen call? || Ist die Anzahl an calls unter dem Threshold?
-        if (currentCallCollection.size() === 0 || currentCallCollection.size() > functionUsageThreshold) {
+        if (currentCallCollection.size() === 0 || currentCallCollection.size() + possibleOtherCalls > functionUsageThreshold) {
             return;
         }
 
@@ -46,8 +52,8 @@ export default (fileInfo, api) => {
             }
         });
 
-        // Gibt es die Funktion? || Wird die Funktion nur unter dem Threshold oft genutzt?
-        if (calledFunctionCollection.size() === 0) {
+        // Gibt es die Funktion? || Wird die Funktion mehrmals deklariert aka ist sie Polymorph?
+        if (calledFunctionCollection.size() === 0 || calledFunctionCollection.size() >= 2) {
             return;
         }
 
