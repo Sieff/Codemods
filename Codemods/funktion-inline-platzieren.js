@@ -60,23 +60,35 @@ export default (fileInfo, api) => {
         // Hole die Funktion aus der Sammlung
         const calledFunction = calledFunctionCollection.get(0).node;
 
-        // Hat die Funktion auch kein Returnstatement?
-        if (j(calledFunction).find(j.ReturnStatement).size() !== 0) {
+        // Hat die Funktion kein Returnstatement oder besteht aus einem einzelnen?
+        const isFunctionSingleReturnStatement = codemodService.isFunctionSingleReturnStatement(calledFunction);
+        if (j(calledFunction).find(j.ReturnStatement).size() !== 0 && !isFunctionSingleReturnStatement) {
             return;
         }
 
-        const functionBodies = currentCallCollection.paths().map(() => codemodService.getFunctionBody(calledFunction));
+        const functionBodies = currentCallCollection.paths().map(() => codemodService.getFunctionBody(calledFunction, isFunctionSingleReturnStatement));
         const parentStatements = currentCallCollection.map((call) => call.parent);
         const paramToArgumentDicts = [];
         currentCallCollection.forEach((call, idx) => {
-            paramToArgumentDicts.push(codemodService.getParamToArgumentDict(calledFunction, parentStatements.get(idx), true));
+            if (isFunctionSingleReturnStatement) {
+                paramToArgumentDicts.push(codemodService.getParamToArgumentDict(calledFunction, call, true));
+            } else {
+                paramToArgumentDicts.push(codemodService.getParamToArgumentDict(calledFunction, parentStatements.get(idx), false));
+            }
         });
 
-        parentStatements.forEach((path, idx) => {
-            functionBodies[idx].forEach((node, i) => {
-                path.insertBefore(functionBodies[idx][i]);
+        if (isFunctionSingleReturnStatement) {
+            currentCallCollection.replaceWith((nodePath, idx) => {
+                return functionBodies[idx];
             });
-        });
+        } else {
+            parentStatements.forEach((path, idx) => {
+                functionBodies[idx].forEach((node, i) => {
+                    path.insertBefore(functionBodies[idx][i]);
+                });
+            });
+            parentStatements.remove();
+        }
 
         functionBodies.forEach((node, idx) => {
             j(node).find(j.Identifier).replaceWith((nodePath) => {
@@ -89,8 +101,6 @@ export default (fileInfo, api) => {
                 return node;
             });
         })
-
-        parentStatements.remove();
 
         codemodService.ast.find(j.FunctionDeclaration, {
             id: {

@@ -39,7 +39,7 @@ function chainFunction3(arr2) {
 }
 
 function dontRaplaceThisChainFunction4() {
-    return chainFunction5()
+    return chainFunction5();
 }
 
 function chainFunction5() {

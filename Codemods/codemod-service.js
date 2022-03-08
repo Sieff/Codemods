@@ -41,26 +41,41 @@ export class CodemodService {
         return dict;
     }
 
-    getFunctionBody(calledFunction) {
-        const nodes = this._ast.find(this._j.FunctionDeclaration, {
-            id: {
-                name: calledFunction.id.name
-            }
-        }).find(this._j.BlockStatement).get(0).node
-        return this._j(this._j(nodes).toSource()).get(0).node.program.body[0].body;
-    }
-
-    arguments(node, expression?) {
-        if (expression) {
-            return node.expression.arguments;
+    getFunctionBody(calledFunction, isSingleReturnStatement?) {
+        if (isSingleReturnStatement) {
+            const node = this._ast.find(this._j.FunctionDeclaration, {
+                id: {
+                    name: calledFunction.id.name
+                }
+            }).find(this._j.ReturnStatement).get(0).node.argument
+            return this._j(this._j(node).toSource()).get(0).node.program.body[0];
         } else {
-            return node.arguments;
+            const node = this._ast.find(this._j.FunctionDeclaration, {
+                id: {
+                    name: calledFunction.id.name
+                }
+            }).find(this._j.BlockStatement).get(0).node
+            return this._j(this._j(node).toSource()).get(0).node.program.body[0].body;
         }
     }
 
-    getParamToArgumentDict(calledFunction, nodePath, expression?) {
+    isFunctionSingleReturnStatement(calledFunction) {
+        return calledFunction.body.body[0] && calledFunction.body.body[0].type && calledFunction.body.body[0].type === 'ReturnStatement'
+    }
+
+    arguments(node, expression?) {
+        if (expression && node.expression.arguments) {
+            return node.expression.arguments;
+        } else if (node.arguments) {
+            return node.arguments;
+        } else {
+            return [];
+        }
+    }
+
+    getParamToArgumentDict(calledFunction, nodePath, isFunctionSingleReturnStatement?) {
         const { node } = nodePath;
-        const callerArguments = this.arguments(node, expression);
+        const callerArguments = this.arguments(node, !isFunctionSingleReturnStatement);
         const functionParams = calledFunction.params;
         assert(functionParams.length === callerArguments.length, "Arguments and Params don't match length.");
         return this.createParamToArgumentDict(functionParams, callerArguments);
