@@ -66,32 +66,37 @@ export default (fileInfo, api, options) => {
             }
         });
 
-        // Gibt es die Funktion? || Wird die Funktion mehrmals deklariert aka ist sie Polymorph?
-        if (calledFunctionCollection.size() === 0 || calledFunctionCollection.size() >= 2) {
+        const calledMethodCollection = codemodService.ast.find(j.MethodDefinition, {
+            key: {
+                name: newCalleeName
+            }
+        });
+
+        // Gibt es die Funktion/Methode? || Wird die Funktion/Methode mehrmals deklariert aka ist sie Polymorph?
+        if ((calledFunctionCollection.size() === 0 && calledMethodCollection.size() === 0) || calledFunctionCollection.size() >= 2 || calledMethodCollection.size() >= 2) {
             return;
         }
 
         // Hole die Funktion aus der Sammlung
-        const calledFunction = calledFunctionCollection.get(0).node;
+        const calledFunctionOrMethod = codemodService.getFunctionOrMethod(calledFunctionCollection, calledMethodCollection);
 
         // Hat die Funktion kein Returnstatement oder besteht aus einem einzelnen?
-        const isFunctionSingleReturnStatement = codemodService.isFunctionSingleReturnStatement(calledFunction);
-        if (j(calledFunction).find(j.ReturnStatement).size() !== 0 && !isFunctionSingleReturnStatement) {
+        if (j(calledFunctionOrMethod.node).find(j.ReturnStatement).size() !== 0 && !calledFunctionOrMethod.isSingleReturn) {
             return;
         }
 
-        const functionBodies = joinedCallCollection.paths().map(() => codemodService.getFunctionBody(calledFunction, isFunctionSingleReturnStatement));
+        const functionBodies = joinedCallCollection.paths().map(() => codemodService.getFunctionOrMethodBody(calledFunctionOrMethod));
         const parentStatements = joinedCallCollection.map((call) => call.parent);
         const paramToArgumentDicts = [];
         joinedCallCollection.forEach((call, idx) => {
-            if (isFunctionSingleReturnStatement) {
-                paramToArgumentDicts.push(codemodService.getParamToArgumentDict(calledFunction, call, true));
+            if (calledFunctionOrMethod.isSingleReturn) {
+                paramToArgumentDicts.push(codemodService.getParamToArgumentDict(calledFunctionOrMethod, call));
             } else {
-                paramToArgumentDicts.push(codemodService.getParamToArgumentDict(calledFunction, parentStatements.get(idx), false));
+                paramToArgumentDicts.push(codemodService.getParamToArgumentDict(calledFunctionOrMethod, parentStatements.get(idx)));
             }
         });
 
-        if (isFunctionSingleReturnStatement) {
+        if (calledFunctionOrMethod.isSingleReturn) {
             joinedCallCollection.replaceWith((nodePath, idx) => {
                 return functionBodies[idx];
             });
@@ -116,11 +121,8 @@ export default (fileInfo, api, options) => {
             });
         })
 
-        codemodService.ast.find(j.FunctionDeclaration, {
-            id: {
-                name: calledFunction.id.name
-            }
-        }).remove();
+        calledMethodCollection.remove();
+        calledFunctionCollection.remove();
     });
 
     return codemodService.ast.toSource();

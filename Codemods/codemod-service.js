@@ -100,8 +100,8 @@ export class CodemodService {
         return dict;
     }
 
-    getFunctionBody(calledFunction, isSingleReturnStatement?) {
-        if (isSingleReturnStatement) {
+    getFunctionBody(calledFunction) {
+        if (this.isFunctionSingleReturnStatement(calledFunction)) {
             const node = this._ast.find(this._j.FunctionDeclaration, {
                 id: {
                     name: calledFunction.id.name
@@ -118,12 +118,42 @@ export class CodemodService {
         }
     }
 
+    getMethodBody(calledMethod) {
+        if (this.isMethodSingleReturnStatement(calledMethod)) {
+            const node = this._ast.find(this._j.MethodDefinition, {
+                key: {
+                    name: calledMethod.key.name
+                }
+            }).find(this._j.ReturnStatement).get(0).node.argument
+            return this._j(this._j(node).toSource()).get(0).node.program.body[0];
+        } else {
+            const node = this._ast.find(this._j.MethodDefinition, {
+                key: {
+                    name: calledMethod.key.name
+                }
+            }).find(this._j.BlockStatement).get(0).node
+            return this._j(this._j(node).toSource()).get(0).node.program.body[0].body;
+        }
+    }
+
+    getFunctionOrMethodBody(calledFunctionOrMethod) {
+        if (calledFunctionOrMethod.isFunction) {
+            return this.getFunctionBody(calledFunctionOrMethod.node);
+        } else {
+            return this.getMethodBody(calledFunctionOrMethod.node);
+        }
+    }
+
     isFunctionSingleReturnStatement(calledFunction) {
         return calledFunction.body.body[0] && calledFunction.body.body[0].type && calledFunction.body.body[0].type === 'ReturnStatement'
     }
 
+    isMethodSingleReturnStatement(calledMethod) {
+        return calledMethod.value.body.body[0] && calledMethod.value.body.body[0].type && calledMethod.value.body.body[0].type === 'ReturnStatement'
+    }
+
     arguments(node, expression?) {
-        if (expression && node.expression.arguments) {
+        if (expression && node.expression && node.expression.arguments) {
             return node.expression.arguments;
         } else if (node.arguments) {
             return node.arguments;
@@ -132,11 +162,37 @@ export class CodemodService {
         }
     }
 
-    getParamToArgumentDict(calledFunction, nodePath, isFunctionSingleReturnStatement?) {
+    getParamToArgumentDict(calledFunctionOrMethod, nodePath, isFunctionSingleReturnStatement?) {
         const { node } = nodePath;
-        const callerArguments = this.arguments(node, !isFunctionSingleReturnStatement);
-        const functionParams = calledFunction.params;
+        const callerArguments = this.arguments(node, !calledFunctionOrMethod.isSingleReturn);
+        const functionParams = calledFunctionOrMethod.params;
         assert(functionParams.length === callerArguments.length, "Arguments and Params don't match length.");
         return this.createParamToArgumentDict(functionParams, callerArguments);
+    }
+
+    getFunctionOrMethod(calledFunctionCollection, calledMethodCollection) {
+        if (calledFunctionCollection.size() !== 0) {
+            const node = calledFunctionCollection.get(0).node;
+            return {
+                params: node.params,
+                name: node.id.name,
+                body: this.getFunctionBody(node),
+                isSingleReturn: this.isFunctionSingleReturnStatement(node),
+                node: node,
+                isFunction: true,
+                isMethod: false
+            }
+        } else {
+            const node = calledMethodCollection.get(0).node;
+            return {
+                params: node.value.params,
+                name: node.key.name,
+                body: this.getMethodBody(node),
+                isSingleReturn: this.isMethodSingleReturnStatement(node),
+                node: node,
+                isFunction: false,
+                isMethod: true
+            }
+        }
     }
 }
