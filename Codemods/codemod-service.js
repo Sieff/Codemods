@@ -1,9 +1,15 @@
 var assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 
 export class CodemodService {
-    constructor(j, ast) {
+    constructor(j, fileInfo, options) {
         this._j = j;
-        this._ast = ast;
+        this._ast = j(fileInfo.source);
+        this._path = fileInfo.path;
+        assert(options && options.root, 'The "--root" option must be set to the absolute path of the root of your sourcecode!')
+        this._rootPath = options.root;
+        this._allFiles = this.getAllFiles(this._rootPath, []);
     }
 
     get ast() {
@@ -12,6 +18,59 @@ export class CodemodService {
 
     set ast(_ast) {
         this._ast = _ast;
+    }
+
+    getAllFiles(dirPath, arrayOfFiles) {
+        const files = fs.readdirSync(dirPath)
+        const self = this;
+
+        let newArrayOfFiles = arrayOfFiles || []
+
+        files.forEach(function(file) {
+            if (fs.statSync(dirPath + "/" + file).isDirectory()) {
+                newArrayOfFiles = self.getAllFiles(dirPath + "/" + file, newArrayOfFiles)
+            } else {
+                newArrayOfFiles.push(path.join(dirPath, "/", file))
+            }
+        })
+
+        return newArrayOfFiles
+    }
+
+    getPossibleCallsInOtherFiles(calleeName) {
+        let possibleUsages = 0;
+        this._allFiles.forEach((file) => {
+            const source = fs.readFileSync(file).toString();
+            const absolutePath = path.join(path.parse(this._rootPath).dir, this._path)
+            const currentAST = this._j(source);
+            const importCollection = currentAST.find(this._j.ImportDeclaration);
+
+            const imports = importCollection.filter((nodePath) => {
+                const { node } = nodePath;
+                const relativePath = path.parse(node.source.value);
+                const filePath = path.parse(file);
+                const importPath = path.join(filePath.dir, relativePath.dir, relativePath.name + '.js');
+                return importPath === absolutePath;
+            });
+
+            if (imports.size() > 0) {
+                const similarIdentifiers = currentAST.find(this._j.Identifier, {
+                    name: calleeName
+                });
+                possibleUsages += similarIdentifiers.size();
+            }
+        });
+        return possibleUsages;
+    }
+
+    getCalleeName(callNode) {
+        if (callNode.callee.name) {
+            return callNode.callee.name
+        }
+        if (callNode.callee.property.name) {
+            return callNode.callee.property.name
+        }
+        return undefined;
     }
 
     createParamToArgumentDict(functionParams, callerArguments) {

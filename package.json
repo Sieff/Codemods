@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "jscodeshift": "^0.13.1",
+    "jscodeshift-collections": "^2.0.2",
     "jscodeshift-helper": "^1.1.0",
     "ts-clone-node": "^0.3.30"
   }

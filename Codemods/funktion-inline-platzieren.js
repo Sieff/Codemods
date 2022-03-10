@@ -1,10 +1,12 @@
 import {CodemodService} from "./codemod-service";
 var assert = require('assert');
 var describe = require('jscodeshift-helper').describe;
+const jscsCollections = require('jscodeshift-collections');
 
-export default (fileInfo, api) => {
+export default (fileInfo, api, options) => {
     const j = api.jscodeshift;
-    const codemodService = new CodemodService(j, j(fileInfo.source));
+    const codemodService = new CodemodService(j, fileInfo, options);
+    jscsCollections.registerCollections(j);
 
     // Die Anzahl an Funktionsaufrufen, die maximal existieren soll, wenn eine Funktion inline platziert werden soll
     const functionUsageThreshold = 1;
@@ -25,30 +27,42 @@ export default (fileInfo, api) => {
     calls.forEach((call) => {
         // Finde zum aktuellen call alle calls mit gleichem callee name
         const callNode = call.node;
+        const calleeName = codemodService.getCalleeName(callNode);
         const currentCallCollection = codemodService.ast.find(j.CallExpression, {
             callee: {
-                name: callNode.callee.name
+                name: calleeName
             }
         });
+        const currentMemberCallCollection = codemodService.ast.find(j.CallExpression, {
+            callee: {
+                property: {
+                    name: calleeName
+                }
+            }
+        });
+        const joinedCallCollection = j(currentCallCollection.paths().concat(currentMemberCallCollection.paths()));
         const similarIdentifierCollection = codemodService.ast.find(j.Identifier, {
-            name: callNode.callee.name
+            name: calleeName
         });
 
         // Mögliche calls in Form einer übergebenen callback Funktion (Alle Identifier mit gleichem Namen - Anzahl der richtigen calls - Funktionsdeklaration)
-        const possibleOtherCalls = similarIdentifierCollection.size() - currentCallCollection.size() - 1
+        const possibleOtherCalls = similarIdentifierCollection.size() - joinedCallCollection.size() - 1;
+        const possibleOtherCallsInOtherFiles = codemodService.getPossibleCallsInOtherFiles(calleeName);
 
         // Gibt es einen call? || Ist die Anzahl an calls unter dem Threshold?
-        if (currentCallCollection.size() === 0 || currentCallCollection.size() + possibleOtherCalls > functionUsageThreshold) {
+        if (joinedCallCollection.size() === 0 ||
+            joinedCallCollection.size() + possibleOtherCalls > functionUsageThreshold ||
+            possibleOtherCallsInOtherFiles > 0) {
             return;
         }
 
         // Nimm den erstbesten call aus den gefundenen gleichen calls
-        const newCall = currentCallCollection.get(0);
+        const newCalleeName = codemodService.getCalleeName(joinedCallCollection.get(0).node);
 
         // Finde die Funktionsdeklaration zum neuen call
         const calledFunctionCollection = codemodService.ast.find(j.FunctionDeclaration, {
             id: {
-                name: newCall.node.callee.name
+                name: newCalleeName
             }
         });
 
@@ -66,10 +80,10 @@ export default (fileInfo, api) => {
             return;
         }
 
-        const functionBodies = currentCallCollection.paths().map(() => codemodService.getFunctionBody(calledFunction, isFunctionSingleReturnStatement));
-        const parentStatements = currentCallCollection.map((call) => call.parent);
+        const functionBodies = joinedCallCollection.paths().map(() => codemodService.getFunctionBody(calledFunction, isFunctionSingleReturnStatement));
+        const parentStatements = joinedCallCollection.map((call) => call.parent);
         const paramToArgumentDicts = [];
-        currentCallCollection.forEach((call, idx) => {
+        joinedCallCollection.forEach((call, idx) => {
             if (isFunctionSingleReturnStatement) {
                 paramToArgumentDicts.push(codemodService.getParamToArgumentDict(calledFunction, call, true));
             } else {
@@ -78,7 +92,7 @@ export default (fileInfo, api) => {
         });
 
         if (isFunctionSingleReturnStatement) {
-            currentCallCollection.replaceWith((nodePath, idx) => {
+            joinedCallCollection.replaceWith((nodePath, idx) => {
                 return functionBodies[idx];
             });
         } else {
