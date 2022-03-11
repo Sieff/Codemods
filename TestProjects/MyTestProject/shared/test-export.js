@@ -7,3 +7,7 @@ export class TestExport {
         return this.usedFunction(3);
     }
 }
+
+export function testExport2() {
+    return false;
+}

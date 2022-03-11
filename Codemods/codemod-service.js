@@ -49,7 +49,7 @@ export class CodemodService {
                 const { node } = nodePath;
                 const relativePath = path.parse(node.source.value);
                 const filePath = path.parse(file);
-                const importPath = path.join(filePath.dir, relativePath.dir, relativePath.name + '.js');
+                const importPath = this.joinPaths(filePath, relativePath, this._rootPath);
                 return importPath === absolutePath;
             });
 
@@ -61,6 +61,14 @@ export class CodemodService {
             }
         });
         return possibleUsages;
+    }
+
+    joinPaths(filePath, relativePath, root) {
+        if (relativePath.dir.startsWith('.')) {
+            return path.join(filePath.dir, relativePath.dir, relativePath.name + '.js');
+        } else {
+            return path.join(root, relativePath.dir, relativePath.name + '.js');
+        }
     }
 
     getCalleeName(callNode) {

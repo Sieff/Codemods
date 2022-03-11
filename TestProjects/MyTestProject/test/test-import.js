@@ -1,4 +1,5 @@
-import {TestExport} from "../test-export";
+import {TestExport} from "shared/test-export";
+import {testExport2} from "../shared/test-export";
 
 class TestImport {
     constructor() {
