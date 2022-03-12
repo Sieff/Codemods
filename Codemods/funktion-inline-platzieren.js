@@ -121,7 +121,7 @@ export default (fileInfo, api, options) => {
             j(node).find(j.Identifier).replaceWith((nodePath) => {
                 const { node } = nodePath;
 
-                if (paramToArgumentDicts[idx][node.name]) {
+                if (paramToArgumentDicts[idx][node.name] && typeof paramToArgumentDicts[idx][node.name] !== 'function') {
                     node.name = paramToArgumentDicts[idx][node.name];
                 }
 
