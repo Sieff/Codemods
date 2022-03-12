@@ -1,0 +1,26 @@
+## Codemods Starten
+### JSCodeshift normal
+
+jscodeshift .\TestProjects\MyTestProject\funktion-inline-platzieren-input.js -t .\Codemods\funktion-inline-platzieren.js
+
+jscodeshift .\TestProjects\vue\src -t .\Codemods\funktion-inline-platzieren.js -d --root=C:\Users\steff\Documents\Uni\ba\Codemods\TestProjects\vue\src
+
+jscodeshift .\MyTestProject -t ..\Codemods\funktion-inline-platzieren.js -d --root=C:\Users\steff\Documents\Uni\ba\Codemods\TestProjects\MyTestProject
+
+
+jscodeshift .\TestProjects\jscodeshift\src\getParser.js -t .\Codemods\funktion-inline-platzieren.js -d --root=C:\Users\steff\Documents\Uni\ba\Codemods\TestProjects\jscodeshift\src
+
+
+working in jscodeshift testprojekt:
+jscodeshift .\src -t ..\..\Codemods\funktion-inline-platzieren.js --root=C:\Users\steff\Documents\Uni\ba\Codemods\TestProjects\jscodeshift\src
+
+
+### JSCodeShift debug Mode
+
+In ./Testprojekt:
+node --inspect-brk ..\node_modules\jscodeshift\bin\jscodeshift.sh -t ..\Codemods\funktion-inline-platzieren.js --run-in-band .\MyTestProject --root=C:\Users\steff\Documents\Uni\ba\Codemods\TestProjects\MyTestProject -d -p
+
+In den jeweiligen Testprojekten:
+node --inspect-brk ..\..\node_modules\jscodeshift\bin\jscodeshift.sh -t ..\..\Codemods\funktion-inline-platzieren.js --run-in-band .\src\getParser.js  --root=C:\Users\steff\Documents\Uni\ba\Codemods\TestProjects\jscodeshift\src
+jscodeshift .\TestProjects\jscodeshift\src\template.js -t .\Codemods\funktion-inline-platzieren.js --root=C:\Users\steff\Documents\Uni\ba\Codemods\TestProjects\jscodeshift\src -d
+node --inspect-brk .\node_modules\jscodeshift\bin\jscodeshift.sh -t .\Codemods\funktion-inline-platzieren.js --run-in-band .\TestProjects\jscodeshift\src\template.js  --root=C:\Users\steff\Documents\Uni\ba\Codemods\TestProjects\jscodeshift\src -d -p
