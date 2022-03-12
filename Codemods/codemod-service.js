@@ -9,7 +9,14 @@ export class CodemodService {
         this._path = fileInfo.path;
         assert(options && options.root, 'The "--root" option must be set to the absolute path of the root of your sourcecode!')
         this._rootPath = options.root;
-        this._allFiles = this.getAllFiles(this._rootPath, []);
+        this._allFiles = this.getAllFiles(this._rootPath, []).filter((file) => file.endsWith('.js'));
+        this._allASTs = this._allFiles.map((file) => {
+            try {
+                return this._j(fs.readFileSync(file).toString());
+            } catch (e) {
+                return false;
+            }
+        });
     }
 
     get ast() {
@@ -39,12 +46,14 @@ export class CodemodService {
 
     getPossibleCallsInOtherFiles(calleeName) {
         let possibleUsages = 0;
-        this._allFiles.forEach((file) => {
-            const source = fs.readFileSync(file).toString();
+        this._allFiles.forEach((file, idx) => {
             const absolutePath = path.join(path.parse(this._rootPath).dir, this._path)
-            const currentAST = this._j(source);
-            const importCollection = currentAST.find(this._j.ImportDeclaration);
+            if (!this._allASTs[idx]) {
+                return;
+            }
+            const currentAST = this._allASTs[idx];
 
+            const importCollection = currentAST.find(this._j.ImportDeclaration);
             const imports = importCollection.filter((nodePath) => {
                 const { node } = nodePath;
                 const relativePath = path.parse(node.source.value);
@@ -54,6 +63,29 @@ export class CodemodService {
             });
 
             if (imports.size() > 0) {
+                const similarIdentifiers = currentAST.find(this._j.Identifier, {
+                    name: calleeName
+                });
+                possibleUsages += similarIdentifiers.size();
+            }
+
+            const requireCollection = currentAST.find(this._j.CallExpression, {
+                callee: {
+                    name: 'require'
+                }
+            });
+            const requires = requireCollection.filter((nodePath) => {
+                const { node } = nodePath;
+                if (!(node.arguments && node.arguments[0] && node.arguments[0].value)) {
+                    return false;
+                }
+                const relativePath = path.parse(node.arguments[0].value);
+                const filePath = path.parse(file);
+                const importPath = this.joinPaths(filePath, relativePath, this._rootPath);
+                return importPath === absolutePath;
+            });
+
+            if (requires.size() > 0) {
                 const similarIdentifiers = currentAST.find(this._j.Identifier, {
                     name: calleeName
                 });
@@ -75,7 +107,7 @@ export class CodemodService {
         if (callNode.callee.name) {
             return callNode.callee.name
         }
-        if (callNode.callee.property.name) {
+        if (callNode.callee.property && callNode.callee.property.name) {
             return callNode.callee.property.name
         }
         return undefined;

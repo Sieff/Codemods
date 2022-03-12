@@ -28,6 +28,10 @@ export default (fileInfo, api, options) => {
         // Finde zum aktuellen call alle calls mit gleichem callee name
         const callNode = call.node;
         const calleeName = codemodService.getCalleeName(callNode);
+        if (!calleeName) {
+            return;
+        }
+
         const currentCallCollection = codemodService.ast.find(j.CallExpression, {
             callee: {
                 name: calleeName
@@ -45,13 +49,17 @@ export default (fileInfo, api, options) => {
             name: calleeName
         });
 
+        // Gibt es einen call? || Gibt es identifier mit dem Callnamen?
+        if (joinedCallCollection.size() === 0 || similarIdentifierCollection.size() === 0) {
+            return;
+        }
+
         // Mögliche calls in Form einer übergebenen callback Funktion (Alle Identifier mit gleichem Namen - Anzahl der richtigen calls - Funktionsdeklaration)
         const possibleOtherCalls = similarIdentifierCollection.size() - joinedCallCollection.size() - 1;
         const possibleOtherCallsInOtherFiles = codemodService.getPossibleCallsInOtherFiles(calleeName);
 
-        // Gibt es einen call? || Ist die Anzahl an calls unter dem Threshold?
-        if (joinedCallCollection.size() === 0 ||
-            joinedCallCollection.size() + possibleOtherCalls > functionUsageThreshold ||
+        //  Ist die Anzahl an calls unter dem Threshold? || Gibt es mögliche Aufrufe in anderen Dateien
+        if (joinedCallCollection.size() + possibleOtherCalls > functionUsageThreshold ||
             possibleOtherCallsInOtherFiles > 0) {
             return;
         }
