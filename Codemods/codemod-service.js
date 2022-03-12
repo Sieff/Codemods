@@ -62,13 +62,6 @@ export class CodemodService {
                 return importPath === absolutePath;
             });
 
-            if (imports.size() > 0) {
-                const similarIdentifiers = currentAST.find(this._j.Identifier, {
-                    name: calleeName
-                });
-                possibleUsages += similarIdentifiers.size();
-            }
-
             const requireCollection = currentAST.find(this._j.CallExpression, {
                 callee: {
                     name: 'require'
@@ -85,7 +78,7 @@ export class CodemodService {
                 return importPath === absolutePath;
             });
 
-            if (requires.size() > 0) {
+            if (requires.size() > 0 || imports.size() > 0) {
                 const similarIdentifiers = currentAST.find(this._j.Identifier, {
                     name: calleeName
                 });
@@ -146,14 +139,14 @@ export class CodemodService {
                 id: {
                     name: calledFunction.id.name
                 }
-            }).find(this._j.ReturnStatement).get(0).node.argument
+            }).find(this._j.ReturnStatement).get(0).node.argument;
             return this._j(this._j(node).toSource()).get(0).node.program.body[0];
         } else {
             const node = this._ast.find(this._j.FunctionDeclaration, {
                 id: {
                     name: calledFunction.id.name
                 }
-            }).find(this._j.BlockStatement).get(0).node
+            }).find(this._j.BlockStatement).get(0).node;
             return this._j(this._j(node).toSource()).get(0).node.program.body[0].body;
         }
     }
