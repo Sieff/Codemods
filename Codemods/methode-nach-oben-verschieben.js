@@ -89,7 +89,7 @@ export default (fileInfo, api, options) => {
         return classDeclaration;
     });
 
-    codemodService.updateCurrentAST();
+    codemodService.updateCurrentAST(dry);
 
     codemodService.ast.find(j.ClassDeclaration)
         .replaceWith((nodePath, idx) => {

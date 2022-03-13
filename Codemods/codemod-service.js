@@ -35,10 +35,22 @@ export class CodemodService {
         this._allASTs = this.currentASTs();
     }
 
-    updateCurrentAST() {
+    updateCurrentAST(dry?) {
         const currentPath = path.join(path.parse(this._rootPath).dir, this._path);
-        console.log(currentPath);
-        this._ast = this._j(fs.readFileSync(currentPath).toString());
+        if (dry) {
+            let index;
+            this._allFiles.every((file, idx) => {
+                if (path.parse(currentPath).dir + path.parse(currentPath).base === path.parse(file).dir + path.parse(file).base) {
+                    index = idx;
+                    return false;
+                } else {
+                    return true;
+                }
+            });
+            this._ast = this._allASTs[index];
+        } else {
+            this._ast = this._j(fs.readFileSync(currentPath).toString());
+        }
     }
 
     writeFiles(newASTs, dry) {
@@ -53,12 +65,12 @@ export class CodemodService {
 
             this.updateASTs();
         } else {
-            newASTs.forEach((newAST) => {
+            newASTs.forEach((newAST, idx) => {
                 if (!newAST) {
                     return;
                 }
 
-                console.log(newAST);
+                this._allASTs[idx] = this._j(newAST);
             });
         }
     }
