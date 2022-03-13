@@ -10,13 +10,7 @@ export class CodemodService {
         assert(options && options.root, 'The "--root" option must be set to the absolute path of the root of your sourcecode!')
         this._rootPath = options.root;
         this._allFiles = this.getAllFiles(this._rootPath, []).filter((file) => file.endsWith('.js'));
-        this._allASTs = this._allFiles.map((file) => {
-            try {
-                return this._j(fs.readFileSync(file).toString());
-            } catch (e) {
-                return false;
-            }
-        });
+        this._allASTs = this.currentASTs();
     }
 
     get ast() {
@@ -25,6 +19,32 @@ export class CodemodService {
 
     set ast(_ast) {
         this._ast = _ast;
+    }
+
+    currentASTs() {
+        return this._allFiles.map((file) => {
+            try {
+                return this._j(fs.readFileSync(file).toString());
+            } catch (e) {
+                return false;
+            }
+        });
+    }
+
+    updateASTs() {
+        this._allASTs = this.currentASTs();
+    }
+
+    writeFiles(newASTs) {
+        newASTs.forEach((newAST, idx) => {
+            if (!newAST) {
+                return;
+            }
+
+            fs.writeFileSync(this._allFiles[idx], newAST);
+        });
+
+        this.updateASTs();
     }
 
     getAllFiles(dirPath, arrayOfFiles) {
