@@ -8,6 +8,8 @@ export default (fileInfo, api, options) => {
     const codemodService = new CodemodService(j, fileInfo, options);
     jscsCollections.registerCollections(j);
 
+    const dry = options.dry;
+
     // Alle Klassen
     const classes = codemodService.ast.find(j.ClassDeclaration);
 
@@ -15,8 +17,7 @@ export default (fileInfo, api, options) => {
         return codemodService.ast.toSource();
     }
 
-    classes.forEach((nodePath) => {
-        const classDeclaration = nodePath.node;
+    const alteredClasses = classes.nodes().map((classDeclaration) => {
         let methods;
         const ASTsWithSubClasses = codemodService.currentASTs().map((currentAST) => {
            const subClassesInCurrentAST = currentAST.find(j.ClassDeclaration, {
@@ -51,7 +52,7 @@ export default (fileInfo, api, options) => {
         });
 
         if (!methods) {
-            return;
+            return false;
         }
 
         const alteredSubClasses = ASTsWithSubClasses.map((currentAST) => {
@@ -77,15 +78,26 @@ export default (fileInfo, api, options) => {
             return currentAST.toSource();
         });
 
-        codemodService.writeFiles(alteredSubClasses);
+        codemodService.writeFiles(alteredSubClasses, dry);
 
         const classBody = classDeclaration.body.body;
         const methodNodes = methods.map((method) => method.node);
         methodNodes.forEach((methodNode) => {
             classBody.push(methodNode);
-        })
+        });
+
+        return classDeclaration;
     });
 
+    codemodService.updateCurrentAST();
+
+    codemodService.ast.find(j.ClassDeclaration)
+        .replaceWith((nodePath, idx) => {
+            if (alteredClasses[idx]) {
+                return alteredClasses[idx]
+            }
+            return nodePath.node;
+        });
 
     return codemodService.ast.toSource();
 }
