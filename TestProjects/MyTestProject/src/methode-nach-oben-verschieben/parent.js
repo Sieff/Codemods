@@ -1,6 +1,6 @@
 class Parent {
     methodIsAlreadyInParent() {
-        console.log('Im already in the Parent! And maybe different!')
+        console.log('Im already in the Parent and might be different!')
     }
 }
 

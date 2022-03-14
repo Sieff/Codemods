@@ -2,7 +2,7 @@ class ParenWithOneChild {
 
 }
 
-class OnlyChild {
+class OnlyChild extends ParenWithOneChild {
     dontMoveThisUp() {
         console.log('Hello, world!');
     }
