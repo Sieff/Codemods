@@ -31,7 +31,9 @@ export default (fileInfo, api, options) => {
            }
 
            subClassesInCurrentAST.forEach((subClassNodePath) => {
-               const subClassMethods = j(subClassNodePath).find(j.MethodDefinition).nodes().map((node) => {
+               const subClassMethods = j(subClassNodePath).find(j.MethodDefinition, {
+                   kind: 'method'
+               }).nodes().map((node) => {
                    return {
                        node: node,
                        source: j(node).toSource()
