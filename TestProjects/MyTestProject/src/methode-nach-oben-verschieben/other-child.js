@@ -27,4 +27,8 @@ class OtherChild extends Parent {
     dontMoveThisUp() {
         console.log('Hello, world! Im an OtherChild');
     }
+
+    methodIsAlreadyInParent() {
+        console.log('Im already in the Parent! And it is different!')
+    }
 }

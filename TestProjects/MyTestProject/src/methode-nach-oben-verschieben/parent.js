@@ -1,4 +1,7 @@
 class Parent {
+    methodIsAlreadyInParent() {
+        console.log('Im already in the Parent! And maybe different!')
+    }
 }
 
 class ChildInSameFile extends Parent {
@@ -29,5 +32,9 @@ class ChildInSameFile extends Parent {
 
     dontMoveThisUp() {
         console.log('Hello, world! Im a ChildInSameFile');
+    }
+
+    methodIsAlreadyInParent() {
+        console.log('Im already in the Parent! And it is different!')
     }
 }
