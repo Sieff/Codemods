@@ -17,6 +17,8 @@ export default (fileInfo, api, options) => {
         return codemodService.ast.toSource();
     }
 
+    let subClassCount = 0;
+
     const alteredClasses = classes.nodes().map((classDeclaration) => {
         let methods;
         const ASTsWithSubClasses = codemodService.currentASTs().map((currentAST) => {
@@ -30,6 +32,8 @@ export default (fileInfo, api, options) => {
                return false;
            }
 
+           subClassCount += subClassesInCurrentAST.size();
+
            subClassesInCurrentAST.forEach((subClassNodePath) => {
                const subClassMethods = j(subClassNodePath).find(j.MethodDefinition, {
                    kind: 'method'
@@ -39,15 +43,28 @@ export default (fileInfo, api, options) => {
                        source: j(node).toSource()
                    };
                });
+
+               const superClassMethods = j(classDeclaration).find(j.MethodDefinition, {
+                   kind: 'method'
+               }).nodes();
+
                if (methods === undefined) {
                    methods = subClassMethods;
                } else {
                    methods = methods.filter((currentMethod) => {
                        return subClassMethods.find((method) => {
-                           return currentMethod.source === method.source
+                           return currentMethod.source === method.source;
                        });
                    });
                }
+
+               methods = methods.filter((currentMethod) => {
+                   return !superClassMethods.find((method) => {
+                       return currentMethod.node.key.name === method.key.name;
+                   });
+               });
+
+
            });
 
            return currentAST;
@@ -55,6 +72,10 @@ export default (fileInfo, api, options) => {
 
         if (!methods) {
             return false;
+        }
+
+        if (subClassCount <= 1) {
+            return;
         }
 
         const alteredSubClasses = ASTsWithSubClasses.map((currentAST) => {
@@ -90,6 +111,10 @@ export default (fileInfo, api, options) => {
 
         return classDeclaration;
     });
+
+    if (subClassCount <= 1) {
+        return codemodService.ast.toSource();
+    }
 
     codemodService.updateCurrentAST(dry);
 
