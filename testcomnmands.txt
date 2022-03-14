@@ -14,6 +14,11 @@ jscodeshift .\TestProjects\jscodeshift\src\getParser.js -t .\Codemods\funktion-i
 working in specific testprojekt:
 jscodeshift .\src -t ..\..\Codemods\funktion-inline-platzieren.js --root=C:\Users\steff\Documents\Uni\ba\Codemods\TestProjects\jscodeshift\src
 jscodeshift .\src -t ..\..\Codemods\methode-nach-oben-verschieben.js --root=C:\Users\steff\Documents\Uni\ba\Codemods\TestProjects\MyTestProject\src -d -p
+jscodeshift .\src -t ..\..\Codemods\methode-nach-oben-verschieben.js --root=C:\Users\steff\Documents\Uni\ba\Codemods\TestProjects\jscodeshift\src -d -p
+
+Methode nach oben verschieben gute Tests (three Projekt):
+jscodeshift .\src -t ..\..\Codemods\methode-nach-oben-verschieben.js --root=C:\Users\steff\Documents\Uni\ba\Codemods\TestProjects\three\src
+
 
 
 ### JSCodeShift debug Mode
