@@ -25,8 +25,6 @@ function crossDependentAdvanced(array) {
     }
 }
 
-
-
 function selfDependent(array) {
     let firstAccumulator = 0;
     let secondAccumulator = 0;
