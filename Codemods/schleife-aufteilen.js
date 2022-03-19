@@ -71,18 +71,10 @@ export default (fileInfo, api, options) => {
             loopBody.every((expression, idx) => {
                 if (!crossDependency) {
                     const otherDeclarations = patternMatch.declarations.filter((declaration) => declaration !== patternMatch.declarations[idx]);
-                    const identifiersInExpression = j(expression).find(j.Identifier).paths();
-                    let otherDeclarationsInExpression = false;
-                    identifiersInExpression.every((identifierPath) => {
-                        if (otherDeclarationsInExpression) {
-                            return false;
-                        } else {
-                            const identifierName = identifierPath.node.name;
-                            otherDeclarationsInExpression = otherDeclarations.find(declaration => declaration === identifierName);
-                            return true;
-                        }
+                    const matchedIdentifiersInExpression = j(expression).find(j.Identifier).nodes().filter(node => {
+                        return otherDeclarations.find(declaration => declaration === node.name);
                     });
-                    crossDependency = otherDeclarationsInExpression;
+                    crossDependency = matchedIdentifiersInExpression.length !== 0;
                     return true;
                 } else {
                     return false;
