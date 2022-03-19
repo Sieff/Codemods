@@ -13,7 +13,7 @@ const jscsCollections = require('jscodeshift-collections');
 
 export default (fileInfo, api, options) => {
     const j = api.jscodeshift;
-    const codemodService = new CodemodService(j, fileInfo, options);
+    const codemodService = new CodemodService(j, fileInfo, options, true);
     jscsCollections.registerCollections(j);
 
     const blockStatements = codemodService.ast.find(j.BlockStatement);
@@ -56,25 +56,47 @@ export default (fileInfo, api, options) => {
         patternMatches.forEach((patternMatch, idx) => {
             const loopBody = patternMatch.loop.body.body;
 
-            let cancelRefactoring = false;
+            let assignmentsEqualDeclarations = true;
             loopBody.every((expression, idx) => {
-                if (!cancelRefactoring) {
-                    cancelRefactoring = !(expression.type === 'ExpressionStatement' && expression.expression.type === 'AssignmentExpression' &&
-                        expression.expression.left && expression.expression.left.name === patternMatch.declarations[idx]);
+                if (assignmentsEqualDeclarations) {
+                    assignmentsEqualDeclarations = expression.type === 'ExpressionStatement' && expression.expression.type === 'AssignmentExpression' &&
+                        expression.expression.left && expression.expression.left.name === patternMatch.declarations[idx];
                     return true;
                 } else {
                     return false;
                 }
             });
 
-            if (cancelRefactoring) {
+            let crossDependency = false;
+            loopBody.every((expression, idx) => {
+                if (!crossDependency) {
+                    const otherDeclarations = patternMatch.declarations.filter((declaration) => declaration !== patternMatch.declarations[idx]);
+                    const identifiersInExpression = j(expression).find(j.Identifier).paths();
+                    let otherDeclarationsInExpression = false;
+                    identifiersInExpression.every((identifierPath) => {
+                        if (otherDeclarationsInExpression) {
+                            return false;
+                        } else {
+                            const identifierName = identifierPath.node.name;
+                            otherDeclarationsInExpression = otherDeclarations.find(declaration => declaration === identifierName);
+                            return true;
+                        }
+                    });
+                    crossDependency = otherDeclarationsInExpression;
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+
+            if (crossDependency || !assignmentsEqualDeclarations) {
                 return;
             }
 
             patternMatch.declarations.forEach((declaration, idx) => {
-                const newLoop = j(j(patternMatch.loop).toSource()).get(0).node.program.body[0]
+                const newLoop = j(j(patternMatch.loop).toSource()).get(0).node.program.body[0];
 
-                newLoop.body.body = newLoop.body.body.filter((expression) => expression.expression.left.name === declaration)
+                newLoop.body.body = newLoop.body.body.filter((expression) => expression.expression.left.name === declaration);
                 forOfStatements.at(0).insertBefore(newLoop);
 
                 if (idx < patternMatch.declarations.length - 1) {

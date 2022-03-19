@@ -3,14 +3,16 @@ const fs = require('fs');
 const path = require('path');
 
 export class CodemodService {
-    constructor(j, fileInfo, options) {
+    constructor(j, fileInfo, options, noRoot?) {
         this._j = j;
         this._ast = j(fileInfo.source);
         this._path = fileInfo.path;
-        assert(options && options.root, 'The "--root" option must be set to the absolute path of the root of your sourcecode!')
-        this._rootPath = options.root;
-        this._allFiles = this.getAllFiles(this._rootPath, []).filter((file) => file.endsWith('.js'));
-        this._allASTs = this.currentASTs();
+        if (!noRoot) {
+            assert(options && options.root, 'The "--root" option must be set to the absolute path of the root of your sourcecode!')
+            this._rootPath = options.root;
+            this._allFiles = this.getAllFiles(this._rootPath, []).filter((file) => file.endsWith('.js'));
+            this._allASTs = this.currentASTs();
+        }
     }
 
     get ast() {
