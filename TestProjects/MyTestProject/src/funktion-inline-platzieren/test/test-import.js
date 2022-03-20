@@ -1,4 +1,4 @@
-import {TestExport} from "shared/test-export";
+import {TestExport} from "funktion-inline-platzieren/shared/test-export";
 import {testExport2} from "../shared/test-export";
 
 class TestImport {
