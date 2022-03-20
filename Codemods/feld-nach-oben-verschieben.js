@@ -42,7 +42,6 @@ export default (fileInfo, api, options) => {
             subClassCount += subClassesInCurrentAST.size();
 
             subClassesInCurrentAST.forEach((subClassNodePath) => {
-                //TODO: Getter und setter dazu holen
                 const subClassConstructorAssignments = j(subClassNodePath).find(j.MethodDefinition, {
                     kind: 'constructor'
                 }).at(0).find(j.AssignmentExpression, {
@@ -179,7 +178,6 @@ export default (fileInfo, api, options) => {
                 }
             });
 
-            //TODO: assignments + getter setter finden
             constructorAssignments.forEach((assignment) => {
                 subClassesInCurrentAST.forEach((subClassNodePath) => {
                     const subClass = j(subClassNodePath);
@@ -216,7 +214,6 @@ export default (fileInfo, api, options) => {
 
         codemodService.writeFiles(alteredSubClasses, dry);
 
-        //TODO: Assignments in constuructor hinzufügen
         const classConstructors = j(classDeclaration).find(j.MethodDefinition, {
             kind: 'constructor'
         });
@@ -227,7 +224,20 @@ export default (fileInfo, api, options) => {
             constructorAssignments.forEach((assignment) => {
                 classConstructor.value.body.body.push(j.expressionStatement(assignment.node));
             });
+        } else {
+            //TODO: neuen consturctor bauen
         }
+
+        const classBody = classDeclaration.body.body;
+        constructorAssignments.forEach((assignment) => {
+            if (assignment.getter) {
+                classBody.push(assignment.getter.node);
+            }
+
+            if (assignment.setter) {
+                classBody.push(assignment.setter.node);
+            }
+        });
 
 
         return classDeclaration;
