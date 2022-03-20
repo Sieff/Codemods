@@ -1,7 +1,17 @@
 class OtherChild extends Parent {
-    constructor() {
-        super();
+    constructor(field1, field2, field3, field4) {
+        super(field1, field2);
         this._member = 'member';
+        this._field3 = field3;
+        this.field4 = field4;
+    }
+
+    set field4(value) {
+        this._field4 = value;
+    }
+
+    get field3() {
+        return this._field3;
     }
 
     moveThisUpBasic() {
