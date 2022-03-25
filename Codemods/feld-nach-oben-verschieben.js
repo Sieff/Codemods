@@ -28,6 +28,7 @@ export default (fileInfo, api, options) => {
 
     const alteredClasses = classes.nodes().map((classDeclaration) => {
         let constructorAssignments;
+        const paramsToBeMoved = new Set([]);
         const ASTsWithSubClasses = codemodService.currentASTs().map((currentAST) => {
             const subClassesInCurrentAST = currentAST.find(j.ClassDeclaration, {
                 superClass: {
@@ -42,22 +43,55 @@ export default (fileInfo, api, options) => {
             subClassCount += subClassesInCurrentAST.size();
 
             subClassesInCurrentAST.forEach((subClassNodePath) => {
-                const subClassConstructorAssignments = j(subClassNodePath).find(j.MethodDefinition, {
-                    kind: 'constructor'
-                }).at(0).find(j.AssignmentExpression, {
+                const constructor = j(subClassNodePath)
+                    .find(j.MethodDefinition, {
+                        kind: 'constructor'
+                    }).at(0);
+
+                if (constructor.size() === 0) {
+                    return;
+                }
+                const constructorParams = new Set(constructor.get(0).node.value.params.map((node) => node.name));
+                const subClassConstructorAssignments = constructor.find(j.AssignmentExpression, {
                     left: {
                         object: {
                             type: 'ThisExpression'
                         }
                     }
-                }).nodes().map((node) => {
-                    return {
-                        node: node,
-                        source: j(node).toSource(),
-                        getter: undefined,
-                        setter: undefined
-                    }
-                });
+                })
+                    .filter((nodePath) => {
+                        const node = nodePath.node;
+                        const identifiersSet = new Set([]);
+                        if (node.right.type && node.right.type === 'Identifier') {
+                            identifiersSet.add(node.right.name);
+                        } else {
+                            const identifiers = j(node.right).find(j.Identifier);
+                            if (identifiers.size() === 0) {
+                                return true;
+                            }
+                            identifiers.nodes().forEach((node) => identifiersSet.add(node.name));
+                        }
+
+                        if (identifiersSet.size > 1) {
+                            return false;
+                        }
+
+                        const param = Array.from(identifiersSet)[0];
+                        const constructorHasParam = constructorParams.has(param);
+                        if (constructorHasParam) {
+                            paramsToBeMoved.add(param);
+                        }
+                        return constructorHasParam;
+                    })
+                    .nodes()
+                    .map((node) => {
+                        return {
+                            node: node,
+                            source: j(node).toSource(),
+                            getter: undefined,
+                            setter: undefined
+                        }
+                    });
 
                 subClassConstructorAssignments.forEach((assignment) => {
                     const assignmentName = assignment.node.left.property.name;
@@ -177,15 +211,29 @@ export default (fileInfo, api, options) => {
                     name: classDeclaration.id.name
                 }
             });
-
-            constructorAssignments.forEach((assignment) => {
-                subClassesInCurrentAST.forEach((subClassNodePath) => {
-                    const subClass = j(subClassNodePath);
-                    subClass.find(j.MethodDefinition, {
+            subClassesInCurrentAST.forEach((subClassNodePath) => {
+                const constructor = j(subClassNodePath)
+                    .find(j.MethodDefinition, {
                         kind: 'constructor'
-                    })
-                        .at(0)
-                        .find(j.AssignmentExpression, {
+                    }).at(0);
+
+                const supercall = constructor.find(j.CallExpression, {
+                    callee: {
+                        type: 'Super'
+                    }
+                });
+
+                assert(supercall.size() !== 0, 'No Super-call in Subclass');
+                const newParams = Array.from(paramsToBeMoved).map((param) => j.identifier(param));
+                newParams.forEach((param) => {
+                    supercall.get(0).node.arguments.push(param);
+                });
+
+                constructorAssignments.forEach((assignment) => {
+
+
+
+                    constructor.find(j.AssignmentExpression, {
                             left: {
                                 object: {
                                     type: 'ThisExpression'
@@ -194,6 +242,8 @@ export default (fileInfo, api, options) => {
                         })
                         .filter((assignmentExpression) => j(assignmentExpression).toSource() === assignment.source)
                         .remove();
+
+                    const subClass = j(subClassNodePath);
 
                     subClass.find(j.MethodDefinition, {
                         kind: 'get'
@@ -218,17 +268,38 @@ export default (fileInfo, api, options) => {
             kind: 'constructor'
         });
 
+        const classBody = classDeclaration.body.body;
+
         if (classConstructors.size() === 1) {
             const classConstructor = classConstructors.get(0).node;
+
+            paramsToBeMoved.forEach((param) => {
+                classConstructor.value.params.push(j.identifier(param));
+            })
 
             constructorAssignments.forEach((assignment) => {
                 classConstructor.value.body.body.push(j.expressionStatement(assignment.node));
             });
         } else {
             //TODO: neuen consturctor bauen
+            const assignments = constructorAssignments.map((constructorAssignment) => j.expressionStatement(constructorAssignment.node));
+            const newConstructor = j.methodDefinition(
+                'constructor',
+                j.identifier(
+                    'constructor'
+                ),
+                j.functionExpression(
+                    null,
+                    Array.from(paramsToBeMoved).map((param) => j.identifier(param)), //params
+                    j.blockStatement(
+                        assignments
+                    )
+                )
+            );
+            classBody.unshift(newConstructor);
         }
 
-        const classBody = classDeclaration.body.body;
+
         constructorAssignments.forEach((assignment) => {
             if (assignment.getter) {
                 classBody.push(assignment.getter.node);
