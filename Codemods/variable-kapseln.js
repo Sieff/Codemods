@@ -218,7 +218,7 @@ export default (fileInfo, api, options) => {
                 });
             }
 
-            // Wenn die AssignmentExpression einen Setter hat, soll dieser genutzt werden
+            // Wenn die MemberExpression einen Getter hat, soll dieser genutzt werden
             if (assignment.assignmentHasGetter && !assignment.assignmentIsGetter && assignment.getterName) {
                 const getterName = assignment.getterName;
                 const propertyName = assignment.assignedMember;
