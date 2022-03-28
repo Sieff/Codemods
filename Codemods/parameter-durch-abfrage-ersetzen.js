@@ -112,12 +112,22 @@ export default (fileInfo, api, options) => {
         });
 
         if (applyRefactoring) {
-            //TODO: Methode auch machen
-            codemodService.ast.find(j.FunctionDeclaration, {
+            const functionDeclarations = codemodService.ast.find(j.FunctionDeclaration, {
                 id: {
                     name: possibleCall.calleeName
                 }
-            }).replaceWith((nodePath) => {
+            })
+
+            const methodDefinitions = codemodService.ast.find(j.MethodDefinition, {
+                key: {
+                    name: possibleCall.calleeName
+                }
+            });
+
+            assert(functionDeclarations.size() === 0 || methodDefinitions.size() === 0, 'FunctionDeclaration and MethodDefinition found!')
+            assert(functionDeclarations.size() <= 1 && methodDefinitions.size() <= 1, 'Multiple FunctionDeclarations or MethodDefinitions found!')
+
+            functionDeclarations.replaceWith((nodePath) => {
                 const node = nodePath.node;
 
                 node.body.body.unshift(j.variableDeclaration(
@@ -139,6 +149,31 @@ export default (fileInfo, api, options) => {
                     ]
                 ));
                 node.params.splice(possibleCall.memberParameterIndex, 1);
+                return node;
+            });
+
+            methodDefinitions.replaceWith((nodePath) => {
+                const node = nodePath.node;
+
+                node.value.body.body.unshift(j.variableDeclaration(
+                    'const',
+                    [
+                        j.variableDeclarator(
+                            j.identifier(
+                                node.value.params[possibleCall.memberParameterIndex].name
+                            ),
+                            j.memberExpression(
+                                j.identifier(
+                                    node.value.params[possibleCall.objectParameterIndex].name
+                                ),
+                                j.identifier(
+                                    possibleCall.memberName
+                                )
+                            )
+                        )
+                    ]
+                ));
+                node.value.params.splice(possibleCall.memberParameterIndex, 1);
                 return node;
             });
 
