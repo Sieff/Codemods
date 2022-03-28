@@ -98,7 +98,46 @@ export default (fileInfo, api, options) => {
         });
 
         assignmentsData.forEach((assignment, idx) => {
+
+            const replaceSettersWithAssignment = (setterName, propertyName) => {
+                assert(setterName !== propertyName, 'Setter and Property have the same name!')
+                j(classPath).find(j.AssignmentExpression, {
+                    left: {
+                        object: {
+                            type: 'ThisExpression'
+                        },
+                        property: {
+                            name: setterName
+                        }
+                    }
+                }).replaceWith((nodePath) => {
+                    const node = nodePath.node
+                    node.left.property.name = propertyName;
+                    return node
+                })
+            };
+
+            const replaceGettersWithMember = (getterName, propertyName) => {
+                j(classPath).find(j.MemberExpression, {
+                    object: {
+                        type: 'ThisExpression'
+                    },
+                    property: {
+                        name: getterName
+                    }
+                }).filter((nodePath) => {
+                    const currentParent = nodePath.parentPath;
+                    return !(currentParent.node.type === 'AssignmentExpression' && currentParent.node.left === nodePath.node);
+                }).replaceWith((nodePath) => {
+                    const node = nodePath.node
+                    node.property.name = propertyName;
+                    return node
+                });
+            };
+
+
             if (!assignment.assignmentHasGetter && !assignment.assignmentIsGetter && !assignment.assignmentHasSetter && !assignment.assignmentIsSetter) {
+                const newName = assignment.assignedMember.startsWith('_') ? assignment.assignedMember.substring(1) : '_' + assignment.assignedMember;
                 const newGetter = j.methodDefinition(
                     'get',
                     j.identifier(
@@ -112,7 +151,7 @@ export default (fileInfo, api, options) => {
                                 j.memberExpression(
                                     j.thisExpression(),
                                     j.identifier(
-                                        '_' + assignment.assignedMember
+                                        newName
                                     )
                                 )
                             )
@@ -139,7 +178,7 @@ export default (fileInfo, api, options) => {
                                     j.memberExpression(
                                         j.thisExpression(),
                                         j.identifier(
-                                            '_' + assignment.assignedMember
+                                            newName
                                         )
                                     ),
                                     j.identifier(
@@ -153,81 +192,35 @@ export default (fileInfo, api, options) => {
 
                 classPath.node.body.body.push(newSetter);
                 classPath.node.body.body.push(newGetter);
+
+                replaceSettersWithAssignment(assignment.assignedMember, newName);
+                replaceGettersWithMember(assignment.assignedMember, newName);
             }
 
-            const replaceAssignmentsWithSetter = (setterName, propertyName) => {
-                j(classPath).find(j.AssignmentExpression, {
-                    operator: '=',
-                    left: {
-                        object: {
-                            type: 'ThisExpression'
-                        },
-                        property: {
-                            name: propertyName
-                        }
-                    }
-                }).filter((nodePath) => {
-                    let currentParent = nodePath.parentPath;
-
-                    while (currentParent && currentParent.node.type !== 'MethodDefinition') {
-                        currentParent = currentParent.parentPath;
-                    }
-                    return currentParent && currentParent.node.kind !== 'set'
-                }).replaceWith((nodePath) => {
-                    const node = nodePath.node
-                    node.left.property.name = setterName;
-                    return node
-                })
-            }
+            //TODO: Andersherum
 
             // Wenn die AssignmentExpression einen Setter hat, soll dieser genutzt werden
             if (assignment.assignmentHasSetter && !assignment.assignmentIsSetter && !assignment.assignmentIsGetter && assignment.setterName) {
                 const setterName = assignment.setterName;
                 const propertyName = assignment.assignedMember;
-                replaceAssignmentsWithSetter(setterName, propertyName);
+                replaceSettersWithAssignment(setterName, propertyName);
             }
             if (!assignment.assignmentHasSetter && assignment.assignmentIsSetter) {
                 const setterName = assignment.assignedMember;
                 const propertyName = assignment.setterProperty;
-                replaceAssignmentsWithSetter(setterName, propertyName);
-            }
-
-            const replaceMemberWithGetter = (getterName, propertyName) => {
-                j(classPath).find(j.MemberExpression, {
-                    object: {
-                        type: 'ThisExpression'
-                    },
-                    property: {
-                        name: propertyName
-                    }
-                }).filter((nodePath) => {
-                    let currentParent = nodePath.parentPath;
-
-                    if (currentParent.node.type === 'AssignmentExpression' && currentParent.node.left === nodePath.node) {
-                        return false;
-                    }
-
-                    while (currentParent && currentParent.node.type !== 'MethodDefinition') {
-                        currentParent = currentParent.parentPath;
-                    }
-                    return currentParent && currentParent.node.kind !== 'get'
-                }).replaceWith((nodePath) => {
-                    const node = nodePath.node
-                    node.property.name = getterName;
-                    return node
-                });
+                replaceSettersWithAssignment(setterName, propertyName);
             }
 
             // Wenn die MemberExpression einen Getter hat, soll dieser genutzt werden
             if (assignment.assignmentHasGetter && !assignment.assignmentIsGetter && assignment.getterName) {
                 const getterName = assignment.getterName;
                 const propertyName = assignment.assignedMember;
-                replaceMemberWithGetter(getterName, propertyName);
+                replaceGettersWithMember(getterName, propertyName);
             }
             if (!assignment.assignmentHasGetter && assignment.assignmentIsGetter && assignment.getterProperty) {
                 const getterName = assignment.assignedMember;
                 const propertyName = assignment.getterProperty;
-                replaceMemberWithGetter(getterName, propertyName);
+                replaceGettersWithMember(getterName, propertyName);
             }
         });
     });
