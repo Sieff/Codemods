@@ -45,17 +45,17 @@ class VariableKapselnInput {
     // End
 
     usingTheFields() {
-        // Replace with Setter
-        this._field1 = 1;
-        // Replace with Setter
-        this._field2 = 2;
+        // Replace with Property
+        this.field1 = 1;
+        // Replace with Property
+        this.field2 = 2;
         this._field3 = 3;
-        // Gets replaced with new Setter
+        // Gets replaced with new Property
         this._field4 = 4;
-        // Replace with Setter
-        this._field5 = 5;
-        // Replace with Setter
-        this._field6 = 6;
+        // Replace with Property
+        this.field5 = 5;
+        // Replace with Property
+        this.field6 = 6;
 
         const someVariable = this.field1 + this._field1 + this._field2 + this.field3 + this._field3 + this._field4
     }
