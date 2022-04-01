@@ -37,10 +37,17 @@ export default (fileInfo, api, options) => {
            subClassesInCurrentAST.forEach((subClassNodePath) => {
                const subClassMethods = j(subClassNodePath).find(j.MethodDefinition, {
                    kind: 'method'
-               }).nodes().map((node) => {
+               }).paths().map((nodePath) => {
+                   const usedMembers = j(nodePath).find(j.MemberExpression, {
+                       object: {
+                           type: 'ThisExpression'
+                       }
+                   }).nodes().map((node) => node.property.name);
+
                    return {
-                       node: node,
-                       source: j(node).toSource()
+                       node: nodePath.node,
+                       source: j(nodePath.node).toSource(),
+                       usedMembers: usedMembers
                    };
                });
 
@@ -48,6 +55,7 @@ export default (fileInfo, api, options) => {
                    kind: 'method'
                }).nodes();
 
+               // Continouously check if Method is in all subclasses
                if (methods === undefined) {
                    methods = subClassMethods;
                } else {
@@ -58,10 +66,40 @@ export default (fileInfo, api, options) => {
                    });
                }
 
+               // Other Filters
                methods = methods.filter((currentMethod) => {
-                   return !superClassMethods.find((method) => {
+                   let membersAreInSuperclass = true;
+                   currentMethod.usedMembers.every((memberName) => {
+                       const foundThisExpressions = j(classDeclaration).find(j.MemberExpression, {
+                           object: {
+                               type: 'ThisExpression'
+                           },
+                           property: {
+                               name: memberName
+                           }
+                       }).size() !== 0;
+
+                       const foundMethods = j(classDeclaration).find(j.MethodDefinition, {
+                           key: {
+                               name: memberName
+                           }
+                       }).size() !== 0;
+
+                       const foundOtherMethodsToMoveUp = methods.find((method) => method.node.key.name === memberName);
+
+                       if (!foundMethods && !foundThisExpressions && !foundOtherMethodsToMoveUp) {
+                           membersAreInSuperclass = false;
+                           return false;
+                       } else {
+                           return true;
+                       }
+                   });
+
+                   const methodNotInSuperclass = !superClassMethods.find((method) => {
                        return currentMethod.node.key.name === method.key.name;
                    });
+
+                   return methodNotInSuperclass && membersAreInSuperclass;
                });
 
 

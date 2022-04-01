@@ -4,6 +4,7 @@ class OtherChild extends Parent {
         this._member = 'member';
         this._field3 = field3;
         this.field4 = field4;
+        this._childrenOnlyField = 'This field doesnt neccessarily exist in the Parent!'
     }
 
     set field4(value) {
@@ -12,6 +13,10 @@ class OtherChild extends Parent {
 
     get field3() {
         return this._field3;
+    }
+
+    useChildrenOnlyField() {
+        return this._childrenOnlyField;
     }
 
     moveThisUpBasic() {
@@ -24,6 +29,10 @@ class OtherChild extends Parent {
 
     otherFunction() {
         console.log('Hello, world!');
+    }
+
+    moveThisUpUsingParentMember() {
+        return this._field1;
     }
 
     moveThisUpUsingOtherMember() {
