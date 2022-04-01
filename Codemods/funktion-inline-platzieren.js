@@ -106,7 +106,11 @@ export default (fileInfo, api, options) => {
 
         if (calledFunctionOrMethod.isSingleReturn) {
             joinedCallCollection.replaceWith((nodePath, idx) => {
-                return functionBodies[idx];
+                if (nodePath.parent.node.type === 'ReturnStatement') {
+                    return functionBodies[idx].expression
+                } else {
+                    return codemodService.getNodeCopyBySource('(' + j(functionBodies[idx]).toSource() + ')');
+                }
             });
         } else {
             parentStatements.forEach((path, idx) => {

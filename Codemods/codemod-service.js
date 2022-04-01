@@ -3,6 +3,9 @@ const fs = require('fs');
 const path = require('path');
 
 export class CodemodService {
+    //TODO: Module - NodeBuilderModule, FileManagerModule, QueryModule
+    //TODO: Datenklassen erstellen
+
     constructor(j, fileInfo, options, noRoot?) {
         this._j = j;
         this._ast = j(fileInfo.source);
@@ -217,6 +220,14 @@ export class CodemodService {
             }).find(this._j.BlockStatement).get(0).node
             return this._j(this._j(node).toSource()).get(0).node.program.body[0].body;
         }
+    }
+
+    getNodeCopy(node) {
+        return this._j(this._j(node).toSource()).get(0).node.program.body[0].body;
+    }
+
+    getNodeCopyBySource(source) {
+        return this._j(source).get(0).node.program.body[0].body;
     }
 
     getFunctionOrMethodBody(calledFunctionOrMethod) {
