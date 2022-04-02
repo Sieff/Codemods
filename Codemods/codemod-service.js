@@ -8,12 +8,13 @@ export class CodemodService {
     constructor(j, fileInfo, options, noRoot?) {
         this._j = j;
         this._ast = j(fileInfo.source);
+        this._nodeBuilderModule = new NodeBuilderModule(j);
+        this._queryModule = new QueryModule(j, j(fileInfo.source));
+        
         if (!noRoot) {
             assert(options && options.root, 'The "--root" option must be set to the absolute path of the root of your sourcecode!')
             this._fileManagementModule = new FileManagementModule(j, options.root, fileInfo.path)
         }
-        this._nodeBuilderModule = new NodeBuilderModule(j);
-        this._queryModule = new QueryModule(j, j(fileInfo.source));
     }
 
     get ast() {
