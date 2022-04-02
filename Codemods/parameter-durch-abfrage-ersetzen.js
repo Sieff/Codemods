@@ -8,9 +8,12 @@
  * gucken, dass funktion auch in anderen dateien ist???
  */
 import {CodemodService} from "./codemod-service";
+import {ParameterCombination} from "./data-classes/ParameterCombination";
 var assert = require('assert');
 var describe = require('jscodeshift-helper').describe;
 const jscsCollections = require('jscodeshift-collections');
+
+//TODO: Test: Was wenn mehrre member in versch params genutzt werden
 
 export default (fileInfo, api, options) => {
     const j = api.jscodeshift;
@@ -32,13 +35,8 @@ export default (fileInfo, api, options) => {
                     return;
                 }
 
-                possibleParameterCombinations.push({
-                    calleeName: codemodService.getCalleeName(callPath.node),
-                    objectName: argument1.name,
-                    objectParameterIndex: idx1,
-                    memberName: argument2.property.name,
-                    memberParameterIndex: idx2
-                });
+                possibleParameterCombinations.push(new ParameterCombination(codemodService.queryModule.getCalleeName(callPath.node),
+                    argument1.name, idx1, argument2.property.name, idx2));
             });
         });
     });
@@ -130,24 +128,9 @@ export default (fileInfo, api, options) => {
             functionDeclarations.replaceWith((nodePath) => {
                 const node = nodePath.node;
 
-                node.body.body.unshift(j.variableDeclaration(
-                    'const',
-                    [
-                        j.variableDeclarator(
-                            j.identifier(
-                                node.params[possibleCall.memberParameterIndex].name
-                            ),
-                            j.memberExpression(
-                                j.identifier(
-                                    node.params[possibleCall.objectParameterIndex].name
-                                ),
-                                j.identifier(
-                                    possibleCall.memberName
-                                )
-                            )
-                        )
-                    ]
-                ));
+                node.body.body.unshift(codemodService.nodeBuilderModule.variableDeclarationObjectMember(node.params[possibleCall.memberParameterIndex].name,
+                    node.params[possibleCall.objectParameterIndex].name,
+                    possibleCall.memberName));
                 node.params.splice(possibleCall.memberParameterIndex, 1);
                 return node;
             });
@@ -155,24 +138,9 @@ export default (fileInfo, api, options) => {
             methodDefinitions.replaceWith((nodePath) => {
                 const node = nodePath.node;
 
-                node.value.body.body.unshift(j.variableDeclaration(
-                    'const',
-                    [
-                        j.variableDeclarator(
-                            j.identifier(
-                                node.value.params[possibleCall.memberParameterIndex].name
-                            ),
-                            j.memberExpression(
-                                j.identifier(
-                                    node.value.params[possibleCall.objectParameterIndex].name
-                                ),
-                                j.identifier(
-                                    possibleCall.memberName
-                                )
-                            )
-                        )
-                    ]
-                ));
+                node.value.body.body.unshift(codemodService.nodeBuilderModule.variableDeclarationObjectMember(node.value.params[possibleCall.memberParameterIndex].name,
+                    node.value.params[possibleCall.objectParameterIndex].name,
+                    possibleCall.memberName));
                 node.value.params.splice(possibleCall.memberParameterIndex, 1);
                 return node;
             });

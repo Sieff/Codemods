@@ -1,4 +1,5 @@
 import {CodemodService} from "./codemod-service";
+import {MethodWithSource} from "./data-classes/with-source/Method";
 var assert = require('assert');
 var describe = require('jscodeshift-helper').describe;
 const jscsCollections = require('jscodeshift-collections');
@@ -21,7 +22,7 @@ export default (fileInfo, api, options) => {
 
     const alteredClasses = classes.nodes().map((classDeclaration) => {
         let methods;
-        const ASTsWithSubClasses = codemodService.currentASTs().map((currentAST) => {
+        const ASTsWithSubClasses = codemodService.fileManagementModule.currentASTs().map((currentAST) => {
            const subClassesInCurrentAST = currentAST.find(j.ClassDeclaration, {
                superClass: {
                    name: classDeclaration.id.name
@@ -44,11 +45,7 @@ export default (fileInfo, api, options) => {
                        }
                    }).nodes().map((node) => node.property.name);
 
-                   return {
-                       node: nodePath.node,
-                       source: j(nodePath.node).toSource(),
-                       usedMembers: usedMembers
-                   };
+                   return new MethodWithSource(nodePath.node, j(nodePath.node).toSource(), usedMembers);
                });
 
                const superClassMethods = j(classDeclaration).find(j.MethodDefinition, {
@@ -139,7 +136,7 @@ export default (fileInfo, api, options) => {
             return currentAST.toSource();
         });
 
-        codemodService.writeFiles(alteredSubClasses, dry);
+        codemodService.fileManagementModule.writeFiles(alteredSubClasses, dry);
 
         const classBody = classDeclaration.body.body;
         const methodNodes = methods.map((method) => method.node);
@@ -154,7 +151,7 @@ export default (fileInfo, api, options) => {
         return codemodService.ast.toSource();
     }
 
-    codemodService.updateCurrentAST(dry);
+    codemodService.fileManagementModule.updateCurrentAST(dry);
 
     codemodService.ast.find(j.ClassDeclaration)
         .replaceWith((nodePath, idx) => {

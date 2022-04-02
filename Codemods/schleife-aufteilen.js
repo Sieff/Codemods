@@ -7,6 +7,7 @@ keine aufrufe von krassen funktionen
  */
 
 import {CodemodService} from "./codemod-service";
+import {LoopPatternMatch} from "./data-classes/LoopPatternMatch";
 var assert = require('assert');
 var describe = require('jscodeshift-helper').describe;
 const jscsCollections = require('jscodeshift-collections');
@@ -38,10 +39,8 @@ export default (fileInfo, api, options) => {
                 current = statementBody[currentIndex];
             }
             if (declarations.length >= 2 && statementBody[currentIndex].type === 'ForOfStatement') {
-                const patternMatch = {
-                    declarations: declarations.map(declaration => declaration.declarations[0].id.name),
-                    loop: statementBody[currentIndex]
-                }
+                const patternMatch = new LoopPatternMatch(declarations.map(declaration => declaration.declarations[0].id.name),
+                    statementBody[currentIndex]);
                 patternMatches.push(patternMatch);
             }
             nextIndex = currentIndex;

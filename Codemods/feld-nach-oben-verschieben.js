@@ -6,6 +6,8 @@ schauen, ob alle werte aus dem konstruktor kommen können
  */
 
 import {CodemodService} from "./codemod-service";
+import {Field} from "./data-classes/with-source/Field";
+import {NodeWithSource} from "./data-classes/with-source/NodeWithSource";
 var assert = require('assert');
 var describe = require('jscodeshift-helper').describe;
 const jscsCollections = require('jscodeshift-collections');
@@ -29,7 +31,7 @@ export default (fileInfo, api, options) => {
     const alteredClasses = classes.nodes().map((classDeclaration) => {
         let constructorAssignments;
         const paramsToBeMoved = new Set([]);
-        const ASTsWithSubClasses = codemodService.currentASTs().map((currentAST) => {
+        const ASTsWithSubClasses = codemodService.fileManagementModule.currentASTs().map((currentAST) => {
             const subClassesInCurrentAST = currentAST.find(j.ClassDeclaration, {
                 superClass: {
                     name: classDeclaration.id.name
@@ -85,12 +87,7 @@ export default (fileInfo, api, options) => {
                     })
                     .nodes()
                     .map((node) => {
-                        return {
-                            node: node,
-                            source: j(node).toSource(),
-                            getter: undefined,
-                            setter: undefined
-                        }
+                        return new Field(node, j(node).toSource())
                     });
 
                 subClassConstructorAssignments.forEach((assignment) => {
@@ -121,10 +118,7 @@ export default (fileInfo, api, options) => {
                     assert(getters.size() <= 1, 'More than one getter found for Assignment: ' + assignmentName);
 
                     if (getters.size() === 1) {
-                        assignment.getter = {
-                            node: getters.get(0).node,
-                            source: j(getters.get(0).node).toSource()
-                        }
+                        assignment.getter = new NodeWithSource(getters.get(0).node, j(getters.get(0).node).toSource())
                     }
 
                     const setters = j(subClassNodePath).find(j.MethodDefinition, {
@@ -154,10 +148,7 @@ export default (fileInfo, api, options) => {
                     assert(setters.size() <= 1, 'More than one setter found for Assignment: ' + assignmentName);
 
                     if (setters.size() === 1) {
-                        assignment.setter = {
-                            node: setters.get(0).node,
-                            source: j(setters.get(0).node).toSource()
-                        }
+                        assignment.setter = new NodeWithSource(setters.get(0).node, j(setters.get(0).node).toSource())
                     }
                 });
 
@@ -262,7 +253,7 @@ export default (fileInfo, api, options) => {
             return currentAST.toSource();
         });
 
-        codemodService.writeFiles(alteredSubClasses, dry);
+        codemodService.fileManagementModule.writeFiles(alteredSubClasses, dry);
 
         const classConstructors = j(classDeclaration).find(j.MethodDefinition, {
             kind: 'constructor'
@@ -283,19 +274,8 @@ export default (fileInfo, api, options) => {
         } else {
             //TODO: neuen consturctor bauen
             const assignments = constructorAssignments.map((constructorAssignment) => j.expressionStatement(constructorAssignment.node));
-            const newConstructor = j.methodDefinition(
-                'constructor',
-                j.identifier(
-                    'constructor'
-                ),
-                j.functionExpression(
-                    null,
-                    Array.from(paramsToBeMoved).map((param) => j.identifier(param)), //params
-                    j.blockStatement(
-                        assignments
-                    )
-                )
-            );
+            const newConstructor = codemodService.nodeBuilderModule.buildConstructor(Array.from(paramsToBeMoved).map((param) => j.identifier(param)),
+                assignments);
             classBody.unshift(newConstructor);
         }
 
@@ -318,7 +298,7 @@ export default (fileInfo, api, options) => {
         return codemodService.ast.toSource();
     }
 
-    codemodService.updateCurrentAST(dry);
+    codemodService.fileManagementModule.updateCurrentAST(dry);
 
     codemodService.ast.find(j.ClassDeclaration)
         .replaceWith((nodePath, idx) => {

@@ -17,6 +17,9 @@ export default (fileInfo, api, options) => {
     // Ersetze eigentliche Parameter mit tatsächlicher Variable
     // Lösche Funktion
 
+    //TODO: Weniger Scheiße alles
+    //TODO: klammern beim returnding
+
     // Alle Funktionsaufrufe
     const calls = codemodService.ast.find(j.CallExpression);
 
@@ -27,7 +30,7 @@ export default (fileInfo, api, options) => {
     calls.forEach((call) => {
         // Finde zum aktuellen call alle calls mit gleichem callee name
         const callNode = call.node;
-        const calleeName = codemodService.getCalleeName(callNode);
+        const calleeName = codemodService.queryModule.getCalleeName(callNode);
         if (!calleeName) {
             return;
         }
@@ -56,7 +59,7 @@ export default (fileInfo, api, options) => {
 
         // Mögliche calls in Form einer übergebenen callback Funktion (Alle Identifier mit gleichem Namen - Anzahl der richtigen calls - Funktionsdeklaration)
         const possibleOtherCalls = similarIdentifierCollection.size() - joinedCallCollection.size() - 1;
-        const possibleOtherCallsInOtherFiles = codemodService.getPossibleCallsInOtherFiles(calleeName);
+        const possibleOtherCallsInOtherFiles = codemodService.fileManagementModule.getPossibleCallsInOtherFiles(calleeName);
 
         //  Ist die Anzahl an calls unter dem Threshold? || Gibt es mögliche Aufrufe in anderen Dateien
         if (joinedCallCollection.size() + possibleOtherCalls > functionUsageThreshold ||
@@ -65,7 +68,7 @@ export default (fileInfo, api, options) => {
         }
 
         // Nimm den erstbesten call aus den gefundenen gleichen calls
-        const newCalleeName = codemodService.getCalleeName(joinedCallCollection.get(0).node);
+        const newCalleeName = codemodService.queryModule.getCalleeName(joinedCallCollection.get(0).node);
 
         // Finde die Funktionsdeklaration zum neuen call
         const calledFunctionCollection = codemodService.ast.find(j.FunctionDeclaration, {
@@ -86,21 +89,21 @@ export default (fileInfo, api, options) => {
         }
 
         // Hole die Funktion aus der Sammlung
-        const calledFunctionOrMethod = codemodService.getFunctionOrMethod(calledFunctionCollection, calledMethodCollection);
+        const calledFunctionOrMethod = codemodService.queryModule.getFunctionOrMethod(calledFunctionCollection, calledMethodCollection);
 
         // Hat die Funktion kein Returnstatement oder besteht aus einem einzelnen?
         if (j(calledFunctionOrMethod.node).find(j.ReturnStatement).size() !== 0 && !calledFunctionOrMethod.isSingleReturn) {
             return;
         }
 
-        const functionBodies = joinedCallCollection.paths().map(() => codemodService.getFunctionOrMethodBody(calledFunctionOrMethod));
+        const functionBodies = joinedCallCollection.paths().map(() => codemodService.queryModule.getFunctionOrMethodBody(calledFunctionOrMethod));
         const parentStatements = joinedCallCollection.map((call) => call.parent);
         const paramToArgumentDicts = [];
         joinedCallCollection.forEach((call, idx) => {
             if (calledFunctionOrMethod.isSingleReturn) {
-                paramToArgumentDicts.push(codemodService.getParamToArgumentDict(calledFunctionOrMethod, call));
+                paramToArgumentDicts.push(codemodService.queryModule.getParamToArgumentDict(calledFunctionOrMethod, call));
             } else {
-                paramToArgumentDicts.push(codemodService.getParamToArgumentDict(calledFunctionOrMethod, parentStatements.get(idx)));
+                paramToArgumentDicts.push(codemodService.queryModule.getParamToArgumentDict(calledFunctionOrMethod, parentStatements.get(idx)));
             }
         });
 
@@ -109,7 +112,7 @@ export default (fileInfo, api, options) => {
                 if (nodePath.parent.node.type === 'ReturnStatement') {
                     return functionBodies[idx].expression
                 } else {
-                    return codemodService.getNodeCopyBySource('(' + j(functionBodies[idx]).toSource() + ')');
+                    return codemodService.nodeBuilderModule.getNodeCopyBySource('(' + j(functionBodies[idx]).toSource() + ')');
                 }
             });
         } else {

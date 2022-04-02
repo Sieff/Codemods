@@ -138,57 +138,8 @@ export default (fileInfo, api, options) => {
 
             if (!assignment.assignmentHasGetter && !assignment.assignmentIsGetter && !assignment.assignmentHasSetter && !assignment.assignmentIsSetter) {
                 const newName = assignment.assignedMember.startsWith('_') ? assignment.assignedMember.substring(1) : '_' + assignment.assignedMember;
-                const newGetter = j.methodDefinition(
-                    'get',
-                    j.identifier(
-                        assignment.assignedMember
-                    ),
-                    j.functionExpression(
-                        null,
-                        [],
-                        j.blockStatement([
-                            j.returnStatement(
-                                j.memberExpression(
-                                    j.thisExpression(),
-                                    j.identifier(
-                                        newName
-                                    )
-                                )
-                            )
-                        ])
-                    )
-                );
-
-                const newSetter = j.methodDefinition(
-                    'set',
-                    j.identifier(
-                        assignment.assignedMember
-                    ),
-                    j.functionExpression(
-                        null,
-                        [
-                            j.identifier(
-                                'value'
-                            )
-                        ],
-                        j.blockStatement([
-                            j.expressionStatement(
-                                j.assignmentExpression(
-                                    '=',
-                                    j.memberExpression(
-                                        j.thisExpression(),
-                                        j.identifier(
-                                            newName
-                                        )
-                                    ),
-                                    j.identifier(
-                                        'value'
-                                    )
-                                )
-                            )
-                        ])
-                    )
-                );
+                const newGetter = codemodService.nodeBuilderModule.buildGetter(assignment.assignedMember, newName);
+                const newSetter = codemodService.nodeBuilderModule.buildSetter(assignment.assignedMember, newName);
 
                 classPath.node.body.body.push(newSetter);
                 classPath.node.body.body.push(newGetter);
@@ -224,9 +175,6 @@ export default (fileInfo, api, options) => {
             }
         });
     });
-
-
-
 
     return codemodService.ast.toSource();
 }
