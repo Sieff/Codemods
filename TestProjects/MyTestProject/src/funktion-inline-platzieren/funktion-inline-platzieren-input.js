@@ -1,68 +1,149 @@
-function placeFunctionHere(arg1) {
+/*
+ * Funktion inline platzieren Testcases:
+ * 1. Eine Funktion besteht aus einer oder mehreren Anweisungen ohne ein ReturnStatement
+ * 2. Eine Funktion besteht aus einer Anweisung, welche ein ReturnStatement ist
+ * 3. Ein Argument ist ein Member eines Objektes
+ * 4. Die Funktion ist Teil einer Kette, die sich aufruft
+ * 5. Der inline platzierte Wert wird weiter verrechnet
+ * 6. Eine Funktion besteht sowohl aus anweisungen und einem ReturnStatement
+ * 7. Eine Funktion wird mehr als ein mal aufgerufen
+ * 8. Eine Funktion wird normal und als Wert genutzt
+ */
+
+// Testcases 1.:
+function placeOneExpression(arg1) {
     const array = [];
-    replaceThisFunction(array, arg1);
+    oneExpression(array, arg1);
 }
 
-function replaceThisFunction(arr, arg2) {
+function oneExpression(arr, arg2) {
     arr.push(arg2);
 }
 
-function placeFunctionHere2(obj1) {
+function placeMultipleExpressions(arg1) {
     const array = [];
-    replaceThisFunction2(array, obj1.obj);
+    multipleExpressions(array, arg1);
 }
 
-function replaceThisFunction2(arr, obj2) {
-    arr.push(obj2);
+function multipleExpressions(arr, arg2) {
+    arr.push(arg2);
+    arr.push(arg2);
 }
 
-function replaceChainFunctions() {
-    const array = []
-    chainFunction1(array);
+// Testcases 2.:
+function placeReturnStatement(arg3) {
+    return singleReturnStatement(arg3);
 }
 
-function replaceMultiChainFunctions() {
-    const array = []
-    chainFunction1(array);
-}
-
-function chainFunction1(arr1) {
-    chainFunction2(arr1);
-}
-
-function chainFunction2(arr1) {
-    chainFunction3(arr1);
-}
-
-function chainFunction3(arr2) {
-    arr2.push(1);
-}
-
-function dontRaplaceThisChainFunction4() {
-    return chainFunction5();
-}
-
-function chainFunction5() {
-    return chainFunction6();
-}
-
-function chainFunction6() {
-    return 'Das';
-}
-
-function dontPlaceFunctionHere(arg3) {
-    return dontReplaceThisFunction(arg3);
-}
-
-function dontReplaceThisFunction(arg4) {
+function singleReturnStatement(arg4) {
     return arg4 > 1 ? 'Wahr' : 'Falsch';
 }
 
-function dontPlaceFunctionHereAswell(arg5) {
-    return dontReplaceThisFunctionAswell(arg5);
+// Testcases 3.:
+function placeOneExpressionMember(arg1) {
+    const array = [];
+    oneExpressionMember(array, arg1.member);
 }
 
-function dontReplaceThisFunctionAswell(arg6) {
+function oneExpressionMember(arr, arg2) {
+    arr.push(arg2);
+}
+
+function placeReturnStatementMember(arg3) {
+    return singleReturnStatementMember(arg3.member);
+}
+
+function singleReturnStatementMember(arg4) {
+    return arg4 > 1 ? 'Wahr' : 'Falsch';
+}
+
+// TestCases 4.:
+function placeChainFunctionExpressions() {
+    const array = []
+    chainFunctionExpressions1(array);
+}
+
+function chainFunctionExpressions1(arr1) {
+    chainFunctionExpressions2(arr1);
+}
+
+function chainFunctionExpressions2(arr1) {
+    chainFunctionExpressions3(arr1);
+}
+
+function chainFunctionExpressions3(arr2) {
+    arr2.push(1);
+}
+
+function placeChainFunctionReturnStatement() {
+    return chainFunctionReturnStatement1();
+}
+
+function chainFunctionReturnStatement1() {
+    return chainFunctionReturnStatement2();
+}
+
+function chainFunctionReturnStatement2() {
+    return chainFunctionReturnStatement3();
+}
+
+function chainFunctionReturnStatement3() {
+    return 'result';
+}
+
+// TestCases 5.:
+function placeValueIsUsed(arg3) {
+    return valueIsUsed(arg3) * 2;
+}
+
+// TODO: FIX
+function valueIsUsed(arg4) {
+    return arg4 > 1 ? 3 : 2;
+}
+
+// TestCases 6.:
+function dontPlaceFunctionExpressionAndReturnStatement(arg5) {
+    return functionExpressionAndReturnStatement(arg5);
+}
+
+function functionExpressionAndReturnStatement(arg6) {
     const a = arg6 + 1;
     return a > 1 ? 'Wahr' : 'Falsch';
+}
+
+// TestCases 7.:
+function dontPlaceExpressionsMultipleUses(arg1) {
+    const array = [];
+    expressionsMultipleUses(array, arg1);
+    expressionsMultipleUses(array, arg1);
+}
+
+function expressionsMultipleUses(arr, arg2) {
+    arr.push(arg2);
+}
+
+function dontPlaceReturnStatementMultipleUses(arg3) {
+    const a = returnStatementMultipleUses(arg3);
+    const b = returnStatementMultipleUses(arg3);
+    return a + b;
+}
+
+function returnStatementMultipleUses(arg4) {
+    return arg4 > 1 ? 'Wahr' : 'Falsch';
+}
+
+// TestCases 8.:
+function dontPlaceUseDirectAndIndirect(arg1) {
+    const array = [];
+    useDirect(array, arg1);
+    const a = useIndirect(useDirect, array, arg1);
+}
+
+function useDirect(arr, arg2) {
+    arr.push(arg2);
+}
+
+function useIndirect(callback, x, y) {
+    callback(x, y);
+    return 'This Function has the purpose to use the tested Function indirectly and should not be placed inline, therefore this unnecessary ReturnStatement.';
 }
