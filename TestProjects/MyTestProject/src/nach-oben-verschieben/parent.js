@@ -1,68 +1,85 @@
+/*
+ * Methode nach oben verschieben Testcases:
+ * 1. Eine Methode, die in allen Unterklassen und nur dort auftritt und identisch ist
+ * 2. Eine Methode, die in allen Unterklassen und nur dort auftritt und identisch ist und eine andere Funktion benutzt, die auch verschoben wird
+ * 3. Eine Methode, die in allen Unterklassen und nur dort auftritt und identisch ist und eine andere Funktion benutzt, die nicht verschoben wird
+ * 4. Eine Methode, die in allen Unterklassen und nur dort auftritt und identisch ist und ein Feld der oberklasse nutzt
+ * 5. Eine Methode, die in allen Unterklassen und nur dort auftritt und identisch ist und ein Feld, dass nur in den Unterklassen vorhanden ist, nutzt
+ * 6. Eine Methode, die in allen Unterklassen und nur dort auftritt und nicht identisch ist
+ * 7. Eine Methode, die in allen Unterklassen und bereits in der Oberklasse auftritt und in den Unterklassen identisch ist
+ * 7. Eine Methode, die nicht in allen Unterklassen, aber nur dort auftritt und ansonsten in den Unterklassen identisch ist
+ */
+
+//TODO: Update AST Mechanismus kaputt? Funktionen werden in unterklasse nicht gelöscht!
 class Parent {
-    constructor(field1, field2) {
+    constructor(field1) {
         this._field1 = field1;
-        this.field2 = field2;
     }
 
-    set field2(value) {
-        this._field2 = value;
+    get field1() {
+        return this._field1;
     }
 
-    methodIsAlreadyInParent() {
+    dontMoveThisUpMethodIsAlreadyInParent() {
         console.log('Im already in the Parent and might be different!')
     }
 }
 
 class ChildInSameFile extends Parent {
-    constructor(field1, field2, field3, field4) {
-        super(field1, field2);
-        this._member = 'member';
-        this._field3 = field3;
-        this.field4 = field4;
-        this._childrenOnlyField = 'This field doesnt neccessarily exist in the Parent!'
+    constructor(field1) {
+        super(field1);
+        this._childrenOnlyField = 'This field doesnt necessarily exist in the Parent!'
     }
 
-    set field4(value) {
-        this._field4 = value;
-    }
-
-    get field3() {
-        return this._field3;
-    }
-
-    useChildrenOnlyField() {
-        return this._childrenOnlyField;
-    }
-
+    //TestCases 1.:
     moveThisUpBasic() {
         console.log('Hello, world!');
     }
 
+    //TestCases 2.:
     moveThisUpUsingOtherFunction() {
         this.otherFunction();
     }
 
     otherFunction() {
-        console.log('Hello, world!');
+        console.log('This Function will also be moved');
     }
 
+    //TestCases 3.:
+    dontMoveThisUpUsingOtherFunctionFromChild() {
+        this.otherFunctionOnlyInChild();
+    }
+
+    otherFunctionOnlyInChild() {
+        console.log('This Function will not be moved, since it is not the same in every child! 1');
+    }
+
+    //TestCases 4.:
     moveThisUpUsingParentMember() {
-        return this._field1;
+        console.log(this.field1, this._field1);
     }
 
-    moveThisUpUsingOtherMember() {
-        return this.member;
+    //TestCases 5.:
+    dontMoveThisUpUsingChildrenOnlyField() {
+        console.log(this.childrenOnlyField, this._childrenOnlyField);
     }
 
-    get member() {
-        return this._member;
+    get childrenOnlyField() {
+        return this._childrenOnlyField;
     }
 
-    dontMoveThisUp() {
-        console.log('Hello, world! Im a ChildInSameFile');
+    //TestCases 6.:
+    dontMoveThisUpDifferentInChildren() {
+        console.log('This Classes Type is called: ChildInSameFile');
     }
 
-    methodIsAlreadyInParent() {
+    //TestCases 7.:
+    dontMoveThisUpMethodIsAlreadyInParent() {
+        console.log('Im already in the Parent! And it is different!')
+    }
+
+    //TestCases 8.:
+    dontMoveThisUpNotInEveryChild() {
         console.log('Im already in the Parent! And it is different!')
     }
 }
