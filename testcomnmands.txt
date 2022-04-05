@@ -17,6 +17,11 @@ jscodeshift .\src -t ..\..\Codemods\methode-nach-oben-verschieben.js --root=C:\U
 jscodeshift .\src -t ..\..\Codemods\methode-nach-oben-verschieben.js --root=C:\Users\steff\Documents\Uni\ba\Codemods\TestProjects\jscodeshift\src -d -p
 jscodeshift .\src -t ..\..\Codemods\schleife-aufteilen.js --root=C:\Users\steff\Documents\Uni\ba\Codemods\TestProjects\MyTestProject\src -d -p
 
+linux:
+jscodeshift ./src/funktion-inline-platzieren/funktion-inline-platzieren-input.js -t ../../Codemods/funktion-inline-platzieren.js --root=/home/student/IdeaProjects/Codemods/TestProjects/MyTestProject/src -d -p
+/home/student/IdeaProjects/Codemods/TestProjects/MyTestProject
+
+
 Methode nach oben verschieben gute Tests (three Projekt):
 jscodeshift .\src -t ..\..\Codemods\methode-nach-oben-verschieben.js --root=C:\Users\steff\Documents\Uni\ba\Codemods\TestProjects\three\src
 
