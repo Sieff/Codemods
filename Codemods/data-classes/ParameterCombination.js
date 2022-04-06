@@ -1,7 +1,6 @@
 export class ParameterCombination {
-    constructor(calleeName, objectName, objectParameterIndex, memberName, memberParameterIndex) {
+    constructor(calleeName, objectParameterIndex, memberName, memberParameterIndex) {
         this._calleeName = calleeName;
-        this._objectName = objectName;
         this._objectParameterIndex = objectParameterIndex;
         this._memberName = memberName;
         this._memberParameterIndex = memberParameterIndex;
@@ -9,10 +8,6 @@ export class ParameterCombination {
 
     get calleeName() {
         return this._calleeName;
-    }
-
-    get objectName() {
-        return this._objectName;
     }
 
     get objectParameterIndex() {
@@ -25,5 +20,15 @@ export class ParameterCombination {
 
     get memberParameterIndex() {
         return this._memberParameterIndex;
+    }
+
+    shiftIndices(removedIndex) {
+        if (this._objectParameterIndex > removedIndex) {
+            this._objectParameterIndex -= 1;
+        }
+
+        if (this._memberParameterIndex > removedIndex) {
+            this._memberParameterIndex -= 1;
+        }
     }
 }

@@ -36,36 +36,12 @@ export default (fileInfo, api, options) => {
                 }
 
                 possibleParameterCombinations.push(new ParameterCombination(codemodService.queryModule.getCalleeName(callPath.node),
-                    argument1.name, idx1, argument2.property.name, idx2));
+                    idx1, argument2.property.name, idx2));
             });
         });
     });
 
-    const possiblyApplicableCalls = [];
-    const finishedCalls = [];
-    possibleParameterCombinations.forEach((combination) => {
-        if (finishedCalls.find((call) => combination.calleeName === call)) {
-            return;
-        }
-        finishedCalls.push(combination.calleeName);
-
-        const similarCombinations = possibleParameterCombinations.filter((otherCombination) => otherCombination.calleeName === combination.calleeName);
-        let refactoringApplicable = true;
-        similarCombinations.every((similarCombination) => {
-            if (similarCombination.objectParameterIndex === combination.objectParameterIndex &&
-                similarCombination.memberParameterIndex === combination.memberParameterIndex &&
-                similarCombination.memberName === combination.memberName) {
-                return true;
-            } else {
-                refactoringApplicable = false;
-                return false;
-            }
-        });
-
-        if (refactoringApplicable) {
-            possiblyApplicableCalls.push(combination);
-        }
-    });
+    const possiblyApplicableCalls = new Set(possibleParameterCombinations);
 
     possiblyApplicableCalls.forEach((possibleCall) => {
         //TODO: find out function or method beforehand
@@ -150,6 +126,12 @@ export default (fileInfo, api, options) => {
                 node.arguments.splice(possibleCall.memberParameterIndex, 1);
                 return node;
             });
+
+            possiblyApplicableCalls.forEach((combination) => {
+                if (combination.calleeName === possibleCall.calleeName) {
+                    combination.shiftIndices(possibleCall.memberParameterIndex);
+                }
+            })
         }
     });
 
