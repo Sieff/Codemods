@@ -7,18 +7,18 @@
  * 5. Eine Funktion/Methode, die so aufgerufen wird, dass ein Argument ein Mitglied eines anderen ist, allerdings nicht das selbe Mitglied
  */
 
-const testObject1 = {
-    testProperty: 0,
-    testProperty2: 1
+const object1 = {
+    property1: 0,
+    property2: 1
 }
 
-const testObject2 = {
-    testProperty: 0,
-    testProperty2: 1
+const object2 = {
+    property1: 0,
+    property2: 1
 }
 
-const testObject3 = {
-    testProperty: 0
+const object3 = {
+    property: 0
 }
 //TODO: LET statt CONST und Multiple members
 
@@ -83,48 +83,48 @@ class TestClass {
 }
 
 // Testcases 1.:
-baseCase1(testObject1, testObject1.testProperty);
+baseCase1(object1, object1.property1);
 
-baseCase2(testObject1.testProperty, testObject1);
-baseCase2(testObject2.testProperty, testObject2);
+baseCase2(object1.property1, object1);
+baseCase2(object2.property1, object2);
 
 // Testcases 2.:
-multipleMembers(testObject1, testObject1.testProperty, testObject1.testProperty2);
-multipleMembers(testObject2, testObject2.testProperty, testObject2.testProperty2);
+multipleMembers(object1, object1.property1, object1.property2);
+multipleMembers(object2, object2.property1, object2.property2);
 
 // Testcases 3.:
-independentVariable(testObject1, testObject2.testProperty);
-independentVariable(testObject2, testObject1.testProperty);
+independentVariable(object1, object2.property1);
+independentVariable(object2, object1.property1);
 
 // Testcases 4.:
-differentCalls(testObject1.testProperty, testObject1);
-differentCalls(testObject2, testObject3);
+differentCalls(object1.property1, object1);
+differentCalls(object2, object3);
 
 // Testcases 5.:
-differentMember(testObject1, testObject1.testProperty);
-differentMember(testObject2, testObject2.testProperty2);
+differentMember(object1, object1.property1);
+differentMember(object2, object2.property2);
 
 
 const test = new TestClass();
 
 // Testcases 1.:
-test.baseCaseMethod1(testObject1, testObject1.testProperty);
+test.baseCaseMethod1(object1, object1.property1);
 
-test.baseCaseMethod2(testObject1.testProperty, testObject1);
-test.baseCaseMethod2(testObject2.testProperty, testObject2);
+test.baseCaseMethod2(object1.property1, object1);
+test.baseCaseMethod2(object2.property1, object2);
 
 // Testcases 2.:
-test.multipleMembersMethod(testObject1, testObject1.testProperty, testObject1.testProperty2);
-test.multipleMembersMethod(testObject2, testObject2.testProperty, testObject2.testProperty2);
+test.multipleMembersMethod(object1, object1.property1, object1.property2);
+test.multipleMembersMethod(object2, object2.property1, object2.property2);
 
 // Testcases 3.:
-test.independentVariableMethod(testObject1, testObject2.testProperty);
-test.independentVariableMethod(testObject2, testObject1.testProperty);
+test.independentVariableMethod(object1, object2.property1);
+test.independentVariableMethod(object2, object1.property1);
 
 // Testcases 4.:
-test.differentCallsMethod(testObject1.testProperty, testObject1);
-test.differentCallsMethod(testObject2, testObject3);
+test.differentCallsMethod(object1.property1, object1);
+test.differentCallsMethod(object2, object3);
 
 // Testcases 5.:
-test.differentMemberMethod(testObject1, testObject1.testProperty);
-test.differentMemberMethod(testObject1, testObject1.testProperty2);
+test.differentMemberMethod(object1, object1.property1);
+test.differentMemberMethod(object1, object1.property2);
