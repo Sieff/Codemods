@@ -10,7 +10,7 @@ export class NodeBuilderModule {
     variableDeclarationObjectMember(variableName, object, objectMemberName) {
         const j = this._j;
         return j.variableDeclaration(
-            'const',
+            'let',
             [
                 j.variableDeclarator(
                     j.identifier(
