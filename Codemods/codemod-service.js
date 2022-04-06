@@ -36,4 +36,8 @@ export class CodemodService {
     set ast(_ast) {
         this._ast = _ast;
     }
+
+    updateCurrentAST(dry?) {
+        this._ast = this._fileManagementModule.updateCurrentAST(dry);
+    }
 }

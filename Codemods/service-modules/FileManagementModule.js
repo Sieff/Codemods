@@ -65,9 +65,9 @@ export class FileManagementModule {
                     return true;
                 }
             });
-            this._ast = this._allASTs[index];
+            return this._allASTs[index];
         } else {
-            this._ast = this._j(fs.readFileSync(currentPath).toString());
+            return this._j(fs.readFileSync(currentPath).toString());
         }
     }
 

@@ -151,7 +151,7 @@ export default (fileInfo, api, options) => {
         return codemodService.ast.toSource();
     }
 
-    codemodService.fileManagementModule.updateCurrentAST(dry);
+    codemodService.updateCurrentAST(dry);
 
     codemodService.ast.find(j.ClassDeclaration)
         .replaceWith((nodePath, idx) => {
