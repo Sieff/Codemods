@@ -5,7 +5,7 @@ const jscsCollections = require('jscodeshift-collections');
 
 export default (fileInfo, api, options) => {
     const j = api.jscodeshift;
-    const codemodService = new CodemodService(j, fileInfo, options);
+    const codemodService = new CodemodService(j, fileInfo, options, true);
     jscsCollections.registerCollections(j);
 
     // Die Anzahl an Funktionsaufrufen, die maximal existieren soll, wenn eine Funktion inline platziert werden soll

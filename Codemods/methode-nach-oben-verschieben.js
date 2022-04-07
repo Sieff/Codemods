@@ -6,7 +6,7 @@ const jscsCollections = require('jscodeshift-collections');
 
 export default (fileInfo, api, options) => {
     const j = api.jscodeshift;
-    const codemodService = new CodemodService(j, fileInfo, options);
+    const codemodService = new CodemodService(j, fileInfo, options, true);
     jscsCollections.registerCollections(j);
 
     const dry = options.dry;

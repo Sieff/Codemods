@@ -53,7 +53,7 @@ export class FileManagementModule {
         return newArrayOfFiles
     }
 
-    updateCurrentAST(dry?) {
+    updateCurrentAST(dry) {
         const currentPath = path.join(path.parse(this._rootPath).dir, this._path);
         if (dry) {
             let index;
