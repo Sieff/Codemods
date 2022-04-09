@@ -4,7 +4,7 @@ export class NodeBuilderModule {
     }
 
     getNodeCopyBySource(source) {
-        return this._j(source).get(0).node.program.body[0].body;
+        return this._j(source).get(0).node.program.body[0];
     }
 
     variableDeclarationObjectMember(variableName, object, objectMemberName) {

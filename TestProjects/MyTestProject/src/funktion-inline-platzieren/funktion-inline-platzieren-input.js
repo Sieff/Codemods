@@ -96,7 +96,6 @@ function placeValueIsUsed(arg3) {
     return valueIsUsed(arg3) * 2;
 }
 
-// TODO: FIX
 function valueIsUsed(arg4) {
     return arg4 > 1 ? 3 : 2;
 }
