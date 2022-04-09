@@ -10,7 +10,6 @@
  * 7. Eine Methode, die nicht in allen Unterklassen, aber nur dort auftritt und ansonsten in den Unterklassen identisch ist
  */
 
-//TODO: Update AST Mechanismus kaputt? Funktionen werden in unterklasse nicht gelöscht!
 class Parent {
     constructor(field1) {
         this._field1 = field1;

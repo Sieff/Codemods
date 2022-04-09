@@ -20,7 +20,6 @@ const object2 = {
 const object3 = {
     property: 0
 }
-//TODO: LET statt CONST und Multiple members
 
 // Testcases 1.:
 function baseCase1(param1, param2) {
