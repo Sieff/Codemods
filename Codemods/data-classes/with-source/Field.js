@@ -3,8 +3,17 @@ import {NodeWithSource} from "./NodeWithSource";
 export class Field extends NodeWithSource {
     constructor(node, source) {
         super(node, source);
+        this._param = undefined;
         this._getter = undefined;
         this._setter = undefined;
+    }
+
+    set param(value) {
+        this._param = value;
+    }
+
+    get param() {
+        return this._param;
     }
 
     set getter(value) {

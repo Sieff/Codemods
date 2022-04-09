@@ -30,7 +30,6 @@ export default (fileInfo, api, options) => {
 
     const alteredClasses = classes.nodes().map((classDeclaration) => {
         let constructorAssignments;
-        const paramsToBeMoved = new Set([]);
         const ASTsWithSubClasses = codemodService.fileManagementModule.currentASTs().map((currentAST) => {
             const subClassesInCurrentAST = currentAST.find(j.ClassDeclaration, {
                 superClass: {
@@ -54,6 +53,7 @@ export default (fileInfo, api, options) => {
                     return;
                 }
                 const constructorParams = new Set(constructor.get(0).node.value.params.map((node) => node.name));
+                const paramsToBeMoved = new Set([]);
                 const subClassConstructorAssignments = constructor.find(j.AssignmentExpression, {
                     left: {
                         object: {
@@ -81,13 +81,17 @@ export default (fileInfo, api, options) => {
                         const param = Array.from(identifiersSet)[0];
                         const constructorHasParam = constructorParams.has(param);
                         if (constructorHasParam) {
-                            paramsToBeMoved.add(param);
+                            paramsToBeMoved.add({fieldname: node.left.property.name, param: param});
                         }
                         return constructorHasParam;
                     })
                     .nodes()
                     .map((node) => {
-                        return new Field(node, j(node).toSource())
+                        const field = new Field(node, j(node).toSource());
+                        const params = Array.from(paramsToBeMoved).filter((param) => param.fieldname === node.left.property.name)
+                            .map((param) => param.param);
+                        field.param = Array.from(params)[0];
+                        return field;
                     });
 
                 subClassConstructorAssignments.forEach((assignment) => {
@@ -177,8 +181,6 @@ export default (fileInfo, api, options) => {
                         return currentAssignment.node.left.property.name === assignment.left.property.name;
                     });
                 });
-
-
             });
 
             return currentAST;
@@ -202,6 +204,7 @@ export default (fileInfo, api, options) => {
                     name: classDeclaration.id.name
                 }
             });
+
             subClassesInCurrentAST.forEach((subClassNodePath) => {
                 const constructor = j(subClassNodePath)
                     .find(j.MethodDefinition, {
@@ -214,16 +217,13 @@ export default (fileInfo, api, options) => {
                     }
                 });
 
+                const params = Array.from(new Set(constructorAssignments.map((constructorAssignment) => constructorAssignment.param)));
                 assert(supercall.size() !== 0, 'No Super-call in Subclass');
-                const newParams = Array.from(paramsToBeMoved).map((param) => j.identifier(param));
-                newParams.forEach((param) => {
+                params.forEach((param) => {
                     supercall.get(0).node.arguments.push(param);
                 });
 
                 constructorAssignments.forEach((assignment) => {
-
-
-
                     constructor.find(j.AssignmentExpression, {
                             left: {
                                 object: {
@@ -263,18 +263,18 @@ export default (fileInfo, api, options) => {
 
         if (classConstructors.size() === 1) {
             const classConstructor = classConstructors.get(0).node;
-
-            paramsToBeMoved.forEach((param) => {
-                classConstructor.value.params.push(j.identifier(param));
-            })
+            const constructorParams = new Set(classConstructor.value.params.map((param) => param.name));
 
             constructorAssignments.forEach((assignment) => {
+                constructorParams.add(assignment.param);
                 classConstructor.value.body.body.push(j.expressionStatement(assignment.node));
             });
+            classConstructor.value.params = Array.from(constructorParams).map((param) => j.identifier(param));
+
         } else {
-            //TODO: neuen consturctor bauen
             const assignments = constructorAssignments.map((constructorAssignment) => j.expressionStatement(constructorAssignment.node));
-            const newConstructor = codemodService.nodeBuilderModule.buildConstructor(Array.from(paramsToBeMoved).map((param) => j.identifier(param)),
+            const params = Array.from(new Set(constructorAssignments.map((constructorAssignment) => constructorAssignment.param)));
+            const newConstructor = codemodService.nodeBuilderModule.buildConstructor(params.map((param) => j.identifier(param)),
                 assignments);
             classBody.unshift(newConstructor);
         }

@@ -3,7 +3,7 @@
  * 9. Eine Unterklasse in einer anderen Datei
  */
 class FeldNachObenChild2 extends FeldNachObenParent {
-    constructor(field1, field2, field3, field4, field5, field6, field7, field8, otherVariable) {
+    constructor(field1, field2, field3, field4, field5, field6, field7, field8, field9, otherVariable) {
         super();
         // Testcases 1.:
         this._field1 = field1;
@@ -21,6 +21,9 @@ class FeldNachObenChild2 extends FeldNachObenParent {
         this._field7 = field7;
         // Testcases 8.:
         this._field8 = field8;
+        // Testcases 9.:
+        this._field9 = field9;
+        this._field10 = field9;
     }
 
     get field5() {
