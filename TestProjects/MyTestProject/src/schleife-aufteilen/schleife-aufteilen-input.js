@@ -17,7 +17,6 @@ function twoVariablesForOfLoop(array) {
     }
 }
 
-//TODO: ForInStatement
 function twoVariablesForInLoop(array) {
     let firstAccumulator = 0;
     let secondAccumulator = 0;
@@ -27,7 +26,6 @@ function twoVariablesForInLoop(array) {
     }
 }
 
-//TODO: ForStatement
 function twoVariablesForLoop() {
     let firstAccumulator = 0;
     let secondAccumulator = 0;

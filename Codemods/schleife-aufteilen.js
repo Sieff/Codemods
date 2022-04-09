@@ -17,6 +17,8 @@ export default (fileInfo, api, options) => {
     const codemodService = new CodemodService(j, fileInfo, options);
     jscsCollections.registerCollections(j);
 
+    const loopTypes = ['ForOfStatement', 'ForInStatement', 'ForStatement']
+
     const blockStatements = codemodService.ast.find(j.BlockStatement);
 
     blockStatements.forEach((blockStatementPath) => {
@@ -38,7 +40,7 @@ export default (fileInfo, api, options) => {
                 currentIndex += 1;
                 current = statementBody[currentIndex];
             }
-            if (declarations.length >= 2 && statementBody[currentIndex].type === 'ForOfStatement') {
+            if (declarations.length >= 2 && loopTypes.find((type) => type === statementBody[currentIndex].type)) {
                 const patternMatch = new LoopPatternMatch(declarations.map(declaration => declaration.declarations[0].id.name),
                     statementBody[currentIndex]);
                 patternMatches.push(patternMatch);
@@ -46,9 +48,12 @@ export default (fileInfo, api, options) => {
             nextIndex = currentIndex;
         });
 
-        const forOfStatements = j(blockStatementPath).find(j.ForOfStatement)
+        const forOfStatements = j(blockStatementPath).find(j.ForOfStatement);
+        const forInStatements = j(blockStatementPath).find(j.ForInStatement);
+        const forStatements = j(blockStatementPath).find(j.ForStatement);
 
-        if (patternMatches.length === 0 || patternMatches.length !== forOfStatements.size()) {
+        const allLoopStatements = j(forOfStatements.paths().concat(forInStatements.paths()).concat(forStatements.paths()));
+        if (patternMatches.length === 0 || patternMatches.length !== allLoopStatements.size()) {
             return;
         }
 
@@ -88,14 +93,14 @@ export default (fileInfo, api, options) => {
                 const newLoop = j(j(patternMatch.loop).toSource()).get(0).node.program.body[0];
 
                 newLoop.body.body = newLoop.body.body.filter((expression) => expression.expression.left.name === declaration);
-                forOfStatements.at(0).insertBefore(newLoop);
+                allLoopStatements.at(0).insertBefore(newLoop);
 
                 if (idx < patternMatch.declarations.length - 1) {
-                    forOfStatements.at(0).insertBefore(' ');
+                    allLoopStatements.at(0).insertBefore(' ');
                 }
             })
 
-            forOfStatements.at(idx).remove();
+            allLoopStatements.at(idx).remove();
         });
 
     });
