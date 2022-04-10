@@ -1,5 +1,8 @@
 import {NodeWithSource} from "./NodeWithSource";
 
+/**
+ * A data class for a classfield.
+ */
 export class Field extends NodeWithSource {
     constructor(node, source) {
         super(node, source);

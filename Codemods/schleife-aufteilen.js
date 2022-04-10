@@ -1,11 +1,3 @@
-/*
-Blockstatements suchen
-Find emuster : veriablendeklaration + -> forOf statement -> body hat jeweils assignment für nur eine der deklarationen
-koopieren und lösche statements nacheinander
-nur einzelne expressions jeweils
-keine aufrufe von krassen funktionen
- */
-
 import {CodemodService} from "./codemod-service";
 import {LoopPatternMatch} from "./data-classes/LoopPatternMatch";
 var assert = require('assert');
@@ -21,12 +13,14 @@ export default (fileInfo, api, options) => {
 
     const blockStatements = codemodService.ast.find(j.BlockStatement);
 
+    // Search in all blockstatements
     blockStatements.forEach((blockStatementPath) => {
         const blockStatement = blockStatementPath.node;
         const statementBody = blockStatement.body;
 
         let nextIndex = 0
         let patternMatches = [];
+        // Search for patterns in the form of multiple declarations then a loop which accumulates the variables
         statementBody.forEach((expression, idx) => {
             if (idx < nextIndex) {
                 return;
@@ -57,9 +51,11 @@ export default (fileInfo, api, options) => {
             return;
         }
 
+        // Look at the pattern matches to decide, whether to refactor
         patternMatches.forEach((patternMatch, idx) => {
             const loopBody = patternMatch.loop.body.body;
 
+            // Check if the amount of assignments in the loop is equal to the amount of declarations
             let assignmentsEqualDeclarations = true;
             loopBody.every((expression, idx) => {
                 if (assignmentsEqualDeclarations) {
@@ -71,6 +67,7 @@ export default (fileInfo, api, options) => {
                 }
             });
 
+            // Check if an assignment uses another variable
             let crossDependency = false;
             loopBody.every((expression, idx) => {
                 if (!crossDependency) {
@@ -89,6 +86,7 @@ export default (fileInfo, api, options) => {
                 return;
             }
 
+            // Apply the refactoring
             patternMatch.declarations.forEach((declaration, idx) => {
                 const newLoop = j(j(patternMatch.loop).toSource()).get(0).node.program.body[0];
 

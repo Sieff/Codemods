@@ -8,19 +8,10 @@ export default (fileInfo, api, options) => {
     const codemodService = new CodemodService(j, fileInfo, options, true);
     jscsCollections.registerCollections(j);
 
-    // Die Anzahl an Funktionsaufrufen, die maximal existieren soll, wenn eine Funktion inline platziert werden soll
+    // The maximum amount of function calls, for a function to be placed inline
     const functionUsageThreshold = 1;
 
-    // Finde alle Callexpressions mit Bedingung
-    // Für jede Expression finde die zugehörige Funktion
-    // Ersetze Aufruf durch inhalt der Funktion
-    // Ersetze eigentliche Parameter mit tatsächlicher Variable
-    // Lösche Funktion
-
-    //TODO: Weniger Scheiße alles
-    //TODO: klammern beim returnding
-
-    // Alle Funktionsaufrufe
+    // All functioncalls
     const calls = codemodService.ast.find(j.CallExpression);
 
     if (calls.length === 0) {
@@ -28,7 +19,7 @@ export default (fileInfo, api, options) => {
     }
 
     calls.forEach((call) => {
-        // Finde zum aktuellen call alle calls mit gleichem callee name
+        // Find all calls with the same callee name
         const callNode = call.node;
         const calleeName = codemodService.queryModule.getCalleeName(callNode);
         if (!calleeName) {
@@ -52,25 +43,23 @@ export default (fileInfo, api, options) => {
             name: calleeName
         });
 
-        // Gibt es einen call? || Gibt es identifier mit dem Callnamen?
+        // Is there a call? || Are there identifiers with the same name?
         if (joinedCallCollection.size() === 0 || similarIdentifierCollection.size() === 0) {
             return;
         }
 
-        // Mögliche calls in Form einer übergebenen callback Funktion (Alle Identifier mit gleichem Namen - Anzahl der richtigen calls - Funktionsdeklaration)
         const possibleOtherCalls = similarIdentifierCollection.size() - joinedCallCollection.size() - 1;
         const possibleOtherCallsInOtherFiles = codemodService.fileManagementModule.getPossibleCallsInOtherFiles(calleeName);
 
-        //  Ist die Anzahl an calls unter dem Threshold? || Gibt es mögliche Aufrufe in anderen Dateien
+        //  Is the number of calls above the threshold? || Are there maybe any calls in other files?
         if (joinedCallCollection.size() + possibleOtherCalls > functionUsageThreshold ||
             possibleOtherCallsInOtherFiles > 0) {
             return;
         }
 
-        // Nimm den erstbesten call aus den gefundenen gleichen calls
         const newCalleeName = codemodService.queryModule.getCalleeName(joinedCallCollection.get(0).node);
 
-        // Finde die Funktionsdeklaration zum neuen call
+        // Find the FunctionDeclaration or MethodDefinition
         const calledFunctionCollection = codemodService.ast.find(j.FunctionDeclaration, {
             id: {
                 name: newCalleeName
@@ -83,19 +72,20 @@ export default (fileInfo, api, options) => {
             }
         });
 
-        // Gibt es die Funktion/Methode? || Wird die Funktion/Methode mehrmals deklariert aka ist sie Polymorph?
+        // Is the declaration present in the AST? || Are there multiple declarations?
         if ((calledFunctionCollection.size() === 0 && calledMethodCollection.size() === 0) || calledFunctionCollection.size() >= 2 || calledMethodCollection.size() >= 2) {
             return;
         }
 
-        // Hole die Funktion aus der Sammlung
+        // Get data for function or method
         const calledFunctionOrMethod = codemodService.queryModule.getFunctionOrMethod(calledFunctionCollection, calledMethodCollection);
 
-        // Hat die Funktion kein Returnstatement oder besteht aus einem einzelnen?
+        // Has it no ReturnStatement or consists of a singular one?
         if (j(calledFunctionOrMethod.node).find(j.ReturnStatement).size() !== 0 && !calledFunctionOrMethod.isSingleReturn) {
             return;
         }
 
+        // Get body and dictionary to map arguments to parameters
         const functionBodies = joinedCallCollection.paths().map(() => codemodService.queryModule.getFunctionOrMethodBody(calledFunctionOrMethod));
         const parentStatements = joinedCallCollection.map((call) => call.parent);
         const paramToArgumentDicts = [];
@@ -107,6 +97,7 @@ export default (fileInfo, api, options) => {
             }
         });
 
+        // Place code inline
         if (calledFunctionOrMethod.isSingleReturn) {
             joinedCallCollection.replaceWith((nodePath, idx) => {
                 if (nodePath.parent.node.type === 'ReturnStatement') {
@@ -124,6 +115,7 @@ export default (fileInfo, api, options) => {
             parentStatements.remove();
         }
 
+        // Change parameters to arguments
         functionBodies.forEach((node, idx) => {
             j(node).find(j.Identifier).replaceWith((nodePath) => {
                 const { node } = nodePath;
@@ -136,6 +128,7 @@ export default (fileInfo, api, options) => {
             });
         })
 
+        // Remove original declaration
         calledMethodCollection.remove();
         calledFunctionCollection.remove();
     });

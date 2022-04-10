@@ -19,17 +19,22 @@ export default (fileInfo, api, options) => {
             return;
         }
 
+        // Search for assignments in the constructor
         const assignmentsData = []
         const assignments = constructor.find(j.AssignmentExpression, {
             operator: '='
         });
 
+        // Investigate assignment
         assignments.forEach((assignmentPath) => {
             const assignmentExpression = assignmentPath.node;
+            // Is it a this expression, that is assigned?
             const leftIsThisExpression = assignmentExpression.left.type === 'MemberExpression' &&
                 assignmentExpression.left.object.type === 'ThisExpression'
+            // What member is assigned?
             const assignedMember = leftIsThisExpression ? assignmentExpression.left.property.name : undefined;
 
+            // Is it a setter?
             const assignmentSetter = j(classPath).find(j.MethodDefinition, {
                 kind: 'set',
                 key: {
@@ -40,6 +45,7 @@ export default (fileInfo, api, options) => {
             const assignmentIsSetter = assignmentSetter.size() === 1;
             const setterProperty = assignmentIsSetter ? assignmentSetter.get(0).node.value.body.body[0].expression.left.property.name : undefined;
 
+            // Is the assignment also in a setter?
             const assignmentInSetter = j(classPath).find(j.MethodDefinition, {
                 kind: 'set',
                 value: {
@@ -63,6 +69,7 @@ export default (fileInfo, api, options) => {
             const assignmentHasSetter = assignmentInSetter.size() === 1;
             const setterName = assignmentHasSetter ? assignmentInSetter.get(0).node.key.name : undefined;
 
+            // Is the assignment also the name of a getter?
             const assignmentGetter = j(classPath).find(j.MethodDefinition, {
                 kind: 'get',
                 key: {
@@ -73,6 +80,7 @@ export default (fileInfo, api, options) => {
             const assignmentIsGetter = assignmentGetter.size() === 1;
             const getterProperty = assignmentIsGetter ? assignmentGetter.get(0).node.value.body.body[0].argument.property.name : undefined;
 
+            // Is the assignment also returned in a getter?
             const assignmentInGetter = j(classPath).find(j.MethodDefinition, {
                 kind: 'get',
                 value: {
@@ -98,7 +106,7 @@ export default (fileInfo, api, options) => {
         });
 
         assignmentsData.forEach((assignment, idx) => {
-
+            // Function to replace setters with the assignment
             const replaceSettersWithAssignment = (setterName, propertyName) => {
                 assert(setterName !== propertyName, 'Setter and Property have the same name!')
                 j(classPath).find(j.AssignmentExpression, {
@@ -117,6 +125,7 @@ export default (fileInfo, api, options) => {
                 })
             };
 
+            // Function to replace getters with the member
             const replaceGettersWithMember = (getterName, propertyName) => {
                 j(classPath).find(j.MemberExpression, {
                     object: {
@@ -135,7 +144,7 @@ export default (fileInfo, api, options) => {
                 });
             };
 
-
+            // If no getters and setters are present: Apply refactoring
             if (!assignment.assignmentHasGetter && !assignment.assignmentIsGetter && !assignment.assignmentHasSetter && !assignment.assignmentIsSetter) {
                 const newName = assignment.assignedMember.startsWith('_') ? assignment.assignedMember.substring(1) : '_' + assignment.assignedMember;
                 const newGetter = codemodService.nodeBuilderModule.buildGetter(assignment.assignedMember, newName);
@@ -148,9 +157,7 @@ export default (fileInfo, api, options) => {
                 replaceGettersWithMember(assignment.assignedMember, newName);
             }
 
-            //TODO: Andersherum
-
-            // Wenn die AssignmentExpression einen Setter hat, soll dieser genutzt werden
+            // If the assignment has a setter, don't use the setter within the class
             if (assignment.assignmentHasSetter && !assignment.assignmentIsSetter && !assignment.assignmentIsGetter && assignment.setterName) {
                 const setterName = assignment.setterName;
                 const propertyName = assignment.assignedMember;
@@ -162,7 +169,7 @@ export default (fileInfo, api, options) => {
                 replaceSettersWithAssignment(setterName, propertyName);
             }
 
-            // Wenn die MemberExpression einen Getter hat, soll dieser genutzt werden
+            // When the assignment has a getter, don't use the getter within the class
             if (assignment.assignmentHasGetter && !assignment.assignmentIsGetter && assignment.getterName) {
                 const getterName = assignment.getterName;
                 const propertyName = assignment.assignedMember;

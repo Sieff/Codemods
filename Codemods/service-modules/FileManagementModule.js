@@ -1,6 +1,9 @@
 import fs from "fs";
 const path = require('path');
 
+/**
+ * A Module for the CodemodService, which manages all the js files under the rootpath.
+ */
 export class FileManagementModule {
     constructor(j, rootPath, path) {
         this._j = j;
@@ -26,6 +29,10 @@ export class FileManagementModule {
         return this._allASTs;
     }
 
+    /**
+     * Reads all the files and turns them into ASTs.
+     * @returns {unknown[]}  Array of ASTs
+     */
     currentASTs() {
         return this._allFiles.map((file) => {
             try {
@@ -36,6 +43,12 @@ export class FileManagementModule {
         });
     }
 
+    /**
+     * Get all the files under dirPath and return the absolute path in an array.
+     * @param dirPath Path to the directory.
+     * @param arrayOfFiles Accumulator of files for recursive usage.
+     * @returns {*[]} Array of filepaths.
+     */
     getAllFiles(dirPath, arrayOfFiles) {
         const files = fs.readdirSync(dirPath)
         const self = this;
@@ -53,6 +66,11 @@ export class FileManagementModule {
         return newArrayOfFiles
     }
 
+    /**
+     * Updates the current AST.
+     * @param dry Dry mode doesn't update any files.
+     * @returns {unknown|*} The new AST.
+     */
     updateCurrentAST(dry) {
         const currentPath = path.join(path.parse(this._rootPath).dir, this._path);
         if (dry) {
@@ -71,10 +89,18 @@ export class FileManagementModule {
         }
     }
 
+    /**
+     * Updates all ASTs
+     */
     updateASTs() {
         this._allASTs = this.currentASTs();
     }
 
+    /**
+     * Writes the new ASTs to the files.
+     * @param newASTs Array of new ASTs.
+     * @param dry Dry mode doesn't update any files.
+     */
     writeFiles(newASTs, dry) {
         if (!dry) {
             newASTs.forEach((newAST, idx) => {
@@ -97,7 +123,12 @@ export class FileManagementModule {
         }
     }
 
-    getPossibleCallsInOtherFiles(calleeName, _fileManagementModule) {
+    /**
+     * Queries for a name in all files.
+     * @param calleeName The name to query for.
+     * @returns {number} The number of possible usages in all files.
+     */
+    getPossibleCallsInOtherFiles(calleeName) {
         let possibleUsages = 0;
         this.allFiles.forEach((file, idx) => {
             const absolutePath = path.join(path.parse(this.rootPath).dir, this.path)
@@ -141,6 +172,13 @@ export class FileManagementModule {
         return possibleUsages;
     }
 
+    /**
+     * Joins parts of the path to an absolute path.
+     * @param filePath The absolute path to the current file.
+     * @param relativePath The relative path from the current file towards another file.
+     * @param root The absolute path towards the root directory.
+     * @returns {string} The absolute path to the file which is referenced in the relativePath.
+     */
     joinPaths(filePath, relativePath, root) {
         if (relativePath.dir.startsWith('.')) {
             return path.join(filePath.dir, relativePath.dir, relativePath.name + '.js');

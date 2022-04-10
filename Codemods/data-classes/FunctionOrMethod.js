@@ -1,3 +1,6 @@
+/**
+ * Data class for a function or method.
+ */
 class FunctionOrMethod {
     constructor(node, name, params, body, isSingleReturn) {
         this._node = node;
@@ -38,6 +41,9 @@ class FunctionOrMethod {
     }
 }
 
+/**
+ * Data class for a function.
+ */
 export class FunctionData extends FunctionOrMethod {
     constructor(node, name, params, body, isSingleReturn) {
         super(node, name, params, body, isSingleReturn);
@@ -46,6 +52,9 @@ export class FunctionData extends FunctionOrMethod {
     }
 }
 
+/**
+ * Data class for a method.
+ */
 export class MethodData extends FunctionOrMethod {
     constructor(node, name, params, body, isSingleReturn) {
         super(node, name, params, body, isSingleReturn);

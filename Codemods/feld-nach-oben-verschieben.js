@@ -1,10 +1,3 @@
-/*
-Feld wir über konstruktor festgelegt, somit nur schauen, welche variabln im konstruktor zugewiesen werden
-getter setter suchen auch verschieben
-schauen, ob alle werte aus dem konstruktor kommen können
-
- */
-
 import {CodemodService} from "./codemod-service";
 import {Field} from "./data-classes/with-source/Field";
 import {NodeWithSource} from "./data-classes/with-source/NodeWithSource";
@@ -19,18 +12,25 @@ export default (fileInfo, api, options) => {
 
     const dry = options.dry;
 
-    // Alle Klassen
+    // All classes
     const classes = codemodService.ast.find(j.ClassDeclaration);
 
+    // Cancel, if no classes are found
     if (classes.length === 0) {
         return codemodService.ast.toSource();
     }
 
+    // Number of subclasses
     let subClassCount = 0;
 
     const alteredClasses = classes.nodes().map((classDeclaration) => {
+        // Class field assignments in the constructor
         let constructorAssignments;
+
+        // Search in all files
         const ASTsWithSubClasses = codemodService.fileManagementModule.currentASTs().map((currentAST) => {
+
+            // Search for subclasses in the currentAST
             const subClassesInCurrentAST = currentAST.find(j.ClassDeclaration, {
                 superClass: {
                     name: classDeclaration.id.name
@@ -44,6 +44,8 @@ export default (fileInfo, api, options) => {
             subClassCount += subClassesInCurrentAST.size();
 
             subClassesInCurrentAST.forEach((subClassNodePath) => {
+
+                // Search for a constructor
                 const constructor = j(subClassNodePath)
                     .find(j.MethodDefinition, {
                         kind: 'constructor'
@@ -52,8 +54,10 @@ export default (fileInfo, api, options) => {
                 if (constructor.size() === 0) {
                     return;
                 }
+
                 const constructorParams = new Set(constructor.get(0).node.value.params.map((node) => node.name));
                 const paramsToBeMoved = new Set([]);
+                // Check for assignments in the constructor that might be moved up
                 const subClassConstructorAssignments = constructor.find(j.AssignmentExpression, {
                     left: {
                         object: {
@@ -86,6 +90,7 @@ export default (fileInfo, api, options) => {
                         return constructorHasParam;
                     })
                     .nodes()
+                    // Create data object for field that might be moved up
                     .map((node) => {
                         const field = new Field(node, j(node).toSource());
                         const params = Array.from(paramsToBeMoved).filter((param) => param.fieldname === node.left.property.name)
@@ -94,6 +99,7 @@ export default (fileInfo, api, options) => {
                         return field;
                     });
 
+                // Search for getters and setters for the assignments
                 subClassConstructorAssignments.forEach((assignment) => {
                     const assignmentName = assignment.node.left.property.name;
                     const getters = j(subClassNodePath).find(j.MethodDefinition, {
@@ -121,6 +127,7 @@ export default (fileInfo, api, options) => {
 
                     assert(getters.size() <= 1, 'More than one getter found for Assignment: ' + assignmentName);
 
+                    // Assign the getter to the assignment
                     if (getters.size() === 1) {
                         assignment.getter = new NodeWithSource(getters.get(0).node, j(getters.get(0).node).toSource())
                     }
@@ -151,11 +158,13 @@ export default (fileInfo, api, options) => {
 
                     assert(setters.size() <= 1, 'More than one setter found for Assignment: ' + assignmentName);
 
+                    // Assign the getter to the assignment
                     if (setters.size() === 1) {
                         assignment.setter = new NodeWithSource(setters.get(0).node, j(setters.get(0).node).toSource())
                     }
                 });
 
+                // Search for assignments in the superclass
                 const superClassConstructorAssignments = j(classDeclaration).find(j.MethodDefinition, {
                     kind: 'constructor'
                 }).at(0).find(j.AssignmentExpression, {
@@ -166,6 +175,8 @@ export default (fileInfo, api, options) => {
                     }
                 }).nodes();
 
+                // Assign the subclass assignments to the constructorAssignments or filter them if already done so
+                // This assures, that only fields present in all subclasses will be moved up
                 if (constructorAssignments === undefined) {
                     constructorAssignments = subClassConstructorAssignments;
                 } else {
@@ -176,6 +187,7 @@ export default (fileInfo, api, options) => {
                     });
                 }
 
+                // Filter the constructorAssignments with the assignments found in the superclass constructor.
                 constructorAssignments = constructorAssignments.filter((currentAssignment) => {
                     return !superClassConstructorAssignments.find((assignment) => {
                         return currentAssignment.node.left.property.name === assignment.left.property.name;
@@ -186,19 +198,23 @@ export default (fileInfo, api, options) => {
             return currentAST;
         });
 
+        // Cancel, if there are no assignments to be moved
         if (!constructorAssignments) {
             return false;
         }
 
+        // Cancel, if there is only one subclass
         if (subClassCount <= 1) {
             return;
         }
 
+        // Modify the subclasses
         const alteredSubClasses = ASTsWithSubClasses.map((currentAST) => {
             if (!currentAST) {
                 return false;
             }
 
+            // Search for the correct subclasses
             const subClassesInCurrentAST = currentAST.find(j.ClassDeclaration, {
                 superClass: {
                     name: classDeclaration.id.name
@@ -217,12 +233,14 @@ export default (fileInfo, api, options) => {
                     }
                 });
 
+                // Add necessary parameters to super call.
                 const params = Array.from(new Set(constructorAssignments.map((constructorAssignment) => constructorAssignment.param)));
                 assert(supercall.size() !== 0, 'No Super-call in Subclass');
                 params.forEach((param) => {
                     supercall.get(0).node.arguments.push(param);
                 });
 
+                // Remove field assignment, getter and setter.
                 constructorAssignments.forEach((assignment) => {
                     constructor.find(j.AssignmentExpression, {
                             left: {
@@ -261,6 +279,7 @@ export default (fileInfo, api, options) => {
 
         const classBody = classDeclaration.body.body;
 
+        // Add parameters to superclass constructor or create new constructor
         if (classConstructors.size() === 1) {
             const classConstructor = classConstructors.get(0).node;
             const constructorParams = new Set(classConstructor.value.params.map((param) => param.name));
@@ -280,6 +299,7 @@ export default (fileInfo, api, options) => {
         }
 
 
+        // Add getters and setters to super class
         constructorAssignments.forEach((assignment) => {
             if (assignment.getter) {
                 classBody.push(assignment.getter.node);

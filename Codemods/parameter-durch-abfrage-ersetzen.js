@@ -1,19 +1,8 @@
-/**
- * Alle Calls angucken
- * Von denen schauen ob ein Parameter von anderem abgeleitet werden kann
- * gucken ob alle Calls so aussehen
- * Wenn nein ciao
- * Wenn ja variable in funktion einbauen die so heißt wie parameter
- * und abfrage machen
- * gucken, dass funktion auch in anderen dateien ist???
- */
 import {CodemodService} from "./codemod-service";
 import {ParameterCombination} from "./data-classes/ParameterCombination";
-var assert = require('assert');
-var describe = require('jscodeshift-helper').describe;
+const assert = require('assert');
+const describe = require('jscodeshift-helper').describe;
 const jscsCollections = require('jscodeshift-collections');
-
-//TODO: Test: Was wenn mehrre member in versch params genutzt werden
 
 export default (fileInfo, api, options) => {
     const j = api.jscodeshift;
@@ -21,6 +10,7 @@ export default (fileInfo, api, options) => {
     jscsCollections.registerCollections(j);
 
     const possibleParameterCombinations = [];
+    // Search for suitable combinations of parameters in functioncalls
     codemodService.ast.find(j.CallExpression).forEach((callPath) => {
         const callNode = callPath.node;
         const callArguments = callNode.arguments;
@@ -41,10 +31,7 @@ export default (fileInfo, api, options) => {
         });
     });
 
-    const possiblyApplicableCalls = new Set(possibleParameterCombinations);
-
-    possiblyApplicableCalls.forEach((possibleCall) => {
-        //TODO: find out function or method beforehand
+    possibleParameterCombinations.forEach((possibleCall) => {
         const allSimilarMemberCalls = codemodService.ast.find(j.CallExpression, {
             callee: {
                 type: 'MemberExpression',
@@ -67,6 +54,7 @@ export default (fileInfo, api, options) => {
             return;
         }
 
+        // Check, whether the refactoring is applicable
         let applyRefactoring = true;
         combined.every((callPath) => {
             const node = callPath.node;
@@ -101,6 +89,7 @@ export default (fileInfo, api, options) => {
             assert(functionDeclarations.size() === 0 || methodDefinitions.size() === 0, 'FunctionDeclaration and MethodDefinition found!')
             assert(functionDeclarations.size() <= 1 && methodDefinitions.size() <= 1, 'Multiple FunctionDeclarations or MethodDefinitions found!')
 
+            // Add variable declarations at the beginning of the function or method
             functionDeclarations.replaceWith((nodePath) => {
                 const node = nodePath.node;
 
@@ -121,13 +110,14 @@ export default (fileInfo, api, options) => {
                 return node;
             });
 
+            // Delete unnecessary parameters
             combined.replaceWith((nodePath) => {
                 const node = nodePath.node;
                 node.arguments.splice(possibleCall.memberParameterIndex, 1);
                 return node;
             });
 
-            possiblyApplicableCalls.forEach((combination) => {
+            possibleParameterCombinations.forEach((combination) => {
                 if (combination.calleeName === possibleCall.calleeName) {
                     combination.shiftIndices(possibleCall.memberParameterIndex);
                 }

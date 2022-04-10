@@ -11,7 +11,7 @@ export default (fileInfo, api, options) => {
 
     const dry = options.dry;
 
-    // Alle Klassen
+    // All classes
     const classes = codemodService.ast.find(j.ClassDeclaration);
 
     if (classes.length === 0) {
@@ -22,7 +22,11 @@ export default (fileInfo, api, options) => {
 
     const alteredClasses = classes.nodes().map((classDeclaration) => {
         let methods;
+
+        // Search in all files
         const ASTsWithSubClasses = codemodService.fileManagementModule.currentASTs().map((currentAST) => {
+
+            // Search for subclasses in the currentAST
            const subClassesInCurrentAST = currentAST.find(j.ClassDeclaration, {
                superClass: {
                    name: classDeclaration.id.name
@@ -36,6 +40,7 @@ export default (fileInfo, api, options) => {
            subClassCount += subClassesInCurrentAST.size();
 
            subClassesInCurrentAST.forEach((subClassNodePath) => {
+               // Create data classes for the methods
                const subClassMethods = j(subClassNodePath).find(j.MethodDefinition, {
                    kind: 'method'
                }).paths().map((nodePath) => {
@@ -63,7 +68,7 @@ export default (fileInfo, api, options) => {
                    });
                }
 
-               // Other Filters
+               // Check if used members are in superclass and method is not in superclass
                methods = methods.filter((currentMethod) => {
                    let membersAreInSuperclass = true;
                    currentMethod.usedMembers.every((memberName) => {
@@ -113,6 +118,7 @@ export default (fileInfo, api, options) => {
             return;
         }
 
+        // Modifiy subclass ASTs
         const alteredSubClasses = ASTsWithSubClasses.map((currentAST) => {
             if (!currentAST) {
                 return false;
@@ -124,6 +130,7 @@ export default (fileInfo, api, options) => {
                 }
             });
 
+            // Remove methods to be moved
             methods.forEach((method) => {
                 subClassesInCurrentAST.forEach((subClassNodePath) => {
                     const subClass = j(subClassNodePath);
@@ -138,6 +145,7 @@ export default (fileInfo, api, options) => {
 
         codemodService.fileManagementModule.writeFiles(alteredSubClasses, dry);
 
+        // Modify superclass. Add the methods to be moved.
         const classBody = classDeclaration.body.body;
         const methodNodes = methods.map((method) => method.node);
         methodNodes.forEach((methodNode) => {

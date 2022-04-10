@@ -1,9 +1,11 @@
 import {NodeBuilderModule} from "./service-modules/NodeBuilderModule";
 import {FileManagementModule} from "./service-modules/FileManagementModule";
 import {QueryModule} from "./service-modules/QueryModule";
-
 const assert = require('assert');
 
+/**
+ * A service to help the codemods with doing their job. Manages the AST and different modules with different functionality.
+ */
 export class CodemodService {
     constructor(j, fileInfo, options, rootPathNeeded) {
         this._j = j;
@@ -12,7 +14,7 @@ export class CodemodService {
         this._queryModule = new QueryModule(j, j(fileInfo.source));
         
         if (rootPathNeeded) {
-            assert(options && options.root, 'The "--root" option must be set to the absolute path of the root of your sourcecode! Ex.: "--root=/your/path/to/src/folder"')
+            assert(options && options.root, 'The "--root" option must be set to the absolute path of the root of your sourcecode! Ex.: "--root=/your/path/to/folder"')
             this._fileManagementModule = new FileManagementModule(j, options.root, fileInfo.path)
         }
     }
@@ -37,6 +39,10 @@ export class CodemodService {
         this._ast = _ast;
     }
 
+    /**
+     * Updates the current AST.
+     * @param dry Dry mode doesn't update any files.
+     */
     updateCurrentAST(dry) {
         this._ast = this._fileManagementModule.updateCurrentAST(dry);
     }

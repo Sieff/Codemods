@@ -1,3 +1,6 @@
+/**
+ * Data class for a combination of parameters, which use the same object.
+ */
 export class ParameterCombination {
     constructor(calleeName, objectParameterIndex, memberName, memberParameterIndex) {
         this._calleeName = calleeName;

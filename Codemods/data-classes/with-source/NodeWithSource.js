@@ -1,3 +1,6 @@
+/**
+ * A data class for a node combined with its source code.
+ */
 export class NodeWithSource {
     constructor(node, source) {
         this._node = node;
