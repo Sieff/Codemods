@@ -50,6 +50,12 @@ export default (fileInfo, api, options) => {
 
         const possibleOtherCalls = similarIdentifierCollection.size() - joinedCallCollection.size() - 1;
         const possibleOtherCallsInOtherFiles = codemodService.fileManagementModule.getPossibleCallsInOtherFiles(calleeName);
+        const polymorphMethodDefinitions = codemodService.fileManagementModule.getPossiblePolymorphMethodDefinitions(calleeName);
+
+        //Is there a polymorph methodDefinition?
+        if (polymorphMethodDefinitions > 1) {
+            return;
+        }
 
         //  Is the number of calls above the threshold? || Are there maybe any calls in other files?
         if (joinedCallCollection.size() + possibleOtherCalls > functionUsageThreshold ||

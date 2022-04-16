@@ -186,4 +186,17 @@ export class FileManagementModule {
             return path.join(root, relativePath.dir, relativePath.name + '.js');
         }
     }
+
+    getPossiblePolymorphMethodDefinitions(calleeName) {
+        let possiblePolymorphDefinitions = 0;
+        this.allFiles.forEach((file, idx) => {
+            const currentAST = this.allASTs[idx];
+            possiblePolymorphDefinitions += currentAST.find(this._j.MethodDefinition, {
+                key: {
+                    name: calleeName
+                }
+            }).size();
+        });
+        return possiblePolymorphDefinitions;
+    }
 }
