@@ -6,7 +6,7 @@ const jscsCollections = require('jscodeshift-collections');
 
 export default (fileInfo, api, options) => {
     const j = api.jscodeshift;
-    const codemodService = new CodemodService(j, fileInfo, options);
+    const codemodService = new CodemodService(j, fileInfo, options, true);
     jscsCollections.registerCollections(j);
 
     const possibleParameterCombinations = [];
@@ -72,6 +72,10 @@ export default (fileInfo, api, options) => {
                 return false;
             }
         });
+
+        if (codemodService.fileManagementModule.getPossibleCallsInOtherFiles(possibleCall.calleeName) > 0) {
+            return;
+        }
 
         if (applyRefactoring) {
             const functionDeclarations = codemodService.ast.find(j.FunctionDeclaration, {

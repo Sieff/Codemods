@@ -5,6 +5,7 @@
  * 3. Eine Funktion/Methode, die so aufgerufen wird, dass ein Argument ein Mitglied einer unabhängigen Variablen ist
  * 4. Eine Funktion/Methode, die auf verschiedene Arten aufgerufen wird
  * 5. Eine Funktion/Methode, die so aufgerufen wird, dass ein Argument ein Mitglied eines anderen ist, allerdings nicht das selbe Mitglied
+ * 6. Eine Funktion/Methode, die so aufgerufen wird, dass ein Argument ein Mitglied eines anderen ist, allerdings wird sie auch in einer anderen Datei genutzt
  */
 
 const object1 = {
@@ -50,7 +51,12 @@ function differentMember(param1, param2) {
     console.log(param1, param2);
 }
 
-class TestClass {
+// Testcases 6.:
+export function dontChangeWithOtherUsages(param1, param2) {
+    console.log(param1, param2);
+}
+
+export class TestClass {
     // Testcases 1.:
     baseCaseMethod1(param1, param2) {
         console.log(param1, param2);
@@ -79,6 +85,11 @@ class TestClass {
     differentMemberMethod(param1, param2) {
         console.log(param1, param2);
     }
+
+    // Testcases 6.:
+    dontChangeWithOtherUsagesMethod(param1, param2) {
+        console.log(param1, param2);
+    }
 }
 
 // Testcases 1.:
@@ -103,6 +114,8 @@ differentCalls(object2, object3);
 differentMember(object1, object1.property1);
 differentMember(object2, object2.property2);
 
+// Testcases 6.:
+dontChangeWithOtherUsages(object1, object1.property1);
 
 const test = new TestClass();
 
@@ -127,3 +140,6 @@ test.differentCallsMethod(object2, object3);
 // Testcases 5.:
 test.differentMemberMethod(object1, object1.property1);
 test.differentMemberMethod(object1, object1.property2);
+
+// Testcases 6.:
+test.dontChangeWithOtherUsagesMethod(object1, object1.property1);
