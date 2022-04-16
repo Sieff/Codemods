@@ -109,7 +109,9 @@ export default (fileInfo, api, options) => {
                 if (nodePath.parent.node.type === 'ReturnStatement') {
                     return functionBodies[idx].expression
                 } else {
-                    return codemodService.nodeBuilderModule.getNodeCopyBySource('(' + j(functionBodies[idx]).toSource() + ')');
+                    const newNode = codemodService.nodeBuilderModule.getNodeCopyBySource('(' + j(functionBodies[idx]).toSource() + ')');
+                    functionBodies[idx] = newNode;
+                    return newNode;
                 }
             });
         } else {
