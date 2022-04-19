@@ -29,7 +29,7 @@ export default (fileInfo, api, options) => {
             let current = expression;
             let currentIndex = idx;
             let declarations = [];
-            while (current.type === 'VariableDeclaration') {
+            while (currentIndex < statementBody.length && current.type === 'VariableDeclaration') {
                 declarations.push(current);
                 currentIndex += 1;
                 current = statementBody[currentIndex];
