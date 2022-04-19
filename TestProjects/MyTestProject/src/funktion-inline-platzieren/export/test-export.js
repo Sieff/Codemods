@@ -58,7 +58,7 @@ export function singleReturnStatement1(arg4) {
 // Testcases 12.:
 export class TestExport1 {
     dontPlaceMethod1() {
-        return this.method(3);
+        return this.method1(3);
     }
 
     method1(arg2) {
