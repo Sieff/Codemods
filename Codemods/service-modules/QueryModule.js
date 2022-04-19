@@ -156,7 +156,7 @@ export class QueryModule {
      * @param expression Whether the arguments lie under the expression object in the node.
      * @returns {*[]|*} Array of arguments.
      */
-    arguments(node, expression?) {
+    arguments(node, expression) {
         if (expression && node.expression && node.expression.arguments) {
             return node.expression.arguments;
         } else if (node.arguments) {

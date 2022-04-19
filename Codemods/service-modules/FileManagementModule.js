@@ -5,10 +5,10 @@ const path = require('path');
  * A Module for the CodemodService, which manages all the js files under the rootpath.
  */
 export class FileManagementModule {
-    constructor(j, rootPath, path) {
+    constructor(j, path) {
         this._j = j;
         this._path = path;
-        this._rootPath = rootPath;
+        this._rootPath = process.cwd();
         this._allFiles = this.getAllFiles(this._rootPath, []).filter((file) => file.endsWith('.js'));
         this._allASTs = this.currentASTs();
     }
@@ -72,7 +72,7 @@ export class FileManagementModule {
      * @returns {unknown|*} The new AST.
      */
     updateCurrentAST(dry) {
-        const currentPath = path.join(path.parse(this._rootPath).dir, this._path);
+        const currentPath = path.join(this._rootPath, this._path);
         if (dry) {
             let index;
             this._allFiles.every((file, idx) => {
@@ -130,19 +130,20 @@ export class FileManagementModule {
      */
     getPossibleCallsInOtherFiles(calleeName) {
         let possibleUsages = 0;
-        this.allFiles.forEach((file, idx) => {
-            const absolutePath = path.join(path.parse(this.rootPath).dir, this.path)
-            if (!this.allASTs[idx]) {
+        this._allFiles.forEach((file, idx) => {
+            const absolutePath = path.join(this._rootPath, this._path);
+
+            if (!this._allASTs[idx]) {
                 return;
             }
-            const currentAST = this.allASTs[idx];
+            const currentAST = this._allASTs[idx];
 
             const importCollection = currentAST.find(this._j.ImportDeclaration);
             const imports = importCollection.filter((nodePath) => {
                 const { node } = nodePath;
                 const relativePath = path.parse(node.source.value);
                 const filePath = path.parse(file);
-                const importPath = this.joinPaths(filePath, relativePath, this.rootPath);
+                const importPath = this.joinPaths(filePath, relativePath, this._rootPath);
                 return importPath === absolutePath;
             });
 
@@ -158,7 +159,7 @@ export class FileManagementModule {
                 }
                 const relativePath = path.parse(node.arguments[0].value);
                 const filePath = path.parse(file);
-                const importPath = this.joinPaths(filePath, relativePath, this.rootPath);
+                const importPath = this.joinPaths(filePath, relativePath, this._rootPath);
                 return importPath === absolutePath;
             });
 
@@ -189,8 +190,8 @@ export class FileManagementModule {
 
     getPossiblePolymorphMethodDefinitions(calleeName) {
         let possiblePolymorphDefinitions = 0;
-        this.allFiles.forEach((file, idx) => {
-            const currentAST = this.allASTs[idx];
+        this._allFiles.forEach((file, idx) => {
+            const currentAST = this._allASTs[idx];
             possiblePolymorphDefinitions += currentAST.find(this._j.MethodDefinition, {
                 key: {
                     name: calleeName

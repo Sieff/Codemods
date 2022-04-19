@@ -7,7 +7,7 @@ const jscsCollections = require('jscodeshift-collections');
 
 export default (fileInfo, api, options) => {
     const j = api.jscodeshift;
-    const codemodService = new CodemodService(j, fileInfo, options, true);
+    const codemodService = new CodemodService(j, fileInfo, options);
     jscsCollections.registerCollections(j);
 
     const dry = options.dry;
@@ -28,7 +28,7 @@ export default (fileInfo, api, options) => {
         let constructorAssignments;
 
         // Search in all files
-        const ASTsWithSubClasses = codemodService.fileManagementModule.currentASTs().map((currentAST) => {
+        const ASTsWithSubClasses = codemodService.fileManagementModule.allASTs.map((currentAST) => {
 
             // Search for subclasses in the currentAST
             const subClassesInCurrentAST = currentAST.find(j.ClassDeclaration, {
@@ -318,7 +318,7 @@ export default (fileInfo, api, options) => {
         return codemodService.ast.toSource();
     }
 
-    codemodService.updateCurrentAST(dry);
+    codemodService.updateCurrentAST();
 
     codemodService.ast.find(j.ClassDeclaration)
         .replaceWith((nodePath, idx) => {

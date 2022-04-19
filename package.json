@@ -10,9 +10,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@babel/core": "^7.17.9",
     "jscodeshift": "^0.13.1",
     "jscodeshift-collections": "^2.0.2",
     "jscodeshift-helper": "^1.1.0",
+    "recast": "^0.20.5",
     "ts-clone-node": "^0.3.30"
   }
 }
