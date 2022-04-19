@@ -90,6 +90,10 @@ export default (fileInfo, api, options) => {
                 }
             });
 
+            if (methodDefinitions.size() === 0 && functionDeclarations.size() === 0) {
+                return;
+            }
+
             assert(functionDeclarations.size() === 0 || methodDefinitions.size() === 0, 'FunctionDeclaration and MethodDefinition found!')
             assert(functionDeclarations.size() <= 1 && methodDefinitions.size() <= 1, 'Multiple FunctionDeclarations or MethodDefinitions found!')
 
