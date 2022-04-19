@@ -7,10 +7,8 @@ class FeldNachObenParentNoConstructor {
     // Testcases 10.:
 }
 
-// TODO: Keine mehreren Oberklassen
 class FeldNachObenChild1 extends FeldNachObenParentNoConstructor {
     constructor(field1, field2, field3, field4, field5, field6, field7, field8, field9, otherVariable) {
-        // TODO: Variablen an super übergeben
         super();
         // Testcases 1.:
         this._field1 = field1;
@@ -25,7 +23,6 @@ class FeldNachObenChild1 extends FeldNachObenParentNoConstructor {
         // Testcases 7.:
         this._field7 = field7;
         // Testcases 8.:
-        // TODO: Sollte nicht in den oberen Konstruktor aufgenommen werden
         this._field8 = field8;
         // Testcases 9.:
         this._field9 = field9;
