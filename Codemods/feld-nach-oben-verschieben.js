@@ -234,7 +234,7 @@ export default (fileInfo, api, options) => {
                 });
 
                 // Add necessary parameters to super call.
-                const params = Array.from(new Set(constructorAssignments.map((constructorAssignment) => constructorAssignment.param)));
+                const params = Array.from(new Set(constructorAssignments.map((constructorAssignment) => constructorAssignment.param))).filter(param => param);
                 assert(supercall.size() !== 0, 'No Super-call in Subclass');
                 params.forEach((param) => {
                     supercall.get(0).node.arguments.push(param);
