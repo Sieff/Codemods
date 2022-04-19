@@ -285,8 +285,10 @@ export default (fileInfo, api, options) => {
             const constructorParams = new Set(classConstructor.value.params.map((param) => param.name));
 
             constructorAssignments.forEach((assignment) => {
-                constructorParams.add(assignment.param);
-                classConstructor.value.body.body.push(j.expressionStatement(assignment.node));
+                if (assignment.param) {
+                    constructorParams.add(assignment.param);
+                    classConstructor.value.body.body.push(j.expressionStatement(assignment.node));
+                }
             });
             classConstructor.value.params = Array.from(constructorParams).map((param) => j.identifier(param));
 
