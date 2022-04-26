@@ -12,5 +12,4 @@ Dies ist ein Repository für ein Projekt im Rahmen einer Bachelor-Arbeit an der 
 
   cd .\TestProjects\MyTestProject 
   
-  node --inspect-brk ..\..\node_modules\jscodeshift\bin\jscodeshift.sh -t ..\..\Codemods\funktion-inline-platzieren.js --run-in-band .\src\funktion-inline-platzieren\funktion-inline-platzieren-input.js
--d -p
+  node --inspect-brk ..\..\node_modules\jscodeshift\bin\jscodeshift.sh -t ..\..\Codemods\funktion-inline-platzieren.js --run-in-band .\src\funktion-inline-platzieren\funktion-inline-platzieren-input.js -d -p
