@@ -4,11 +4,13 @@ Dies ist ein Repo für ein Projekt im Rahmen einer Bachelor-Arbeit an der Univer
 ## Codemods Starten
 ### JSCodeshift normal
 
-  cd .\TestProjects\MyTestProject 
+  cd .\TestProjects\MyTestProject
+  
   jscodeshift .\src\funktion-inline-platzieren\funktion-inline-platzieren-input.js -t ..\..\Codemods\funktion-inline-platzieren.js
 
 ### JSCodeShift debug Mode
 
   cd .\TestProjects\MyTestProject 
+  
   node --inspect-brk ..\..\node_modules\jscodeshift\bin\jscodeshift.sh -t ..\..\Codemods\funktion-inline-platzieren.js --run-in-band .\src\funktion-inline-platzieren\funktion-inline-platzieren-input.js
 -d -p
