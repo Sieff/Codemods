@@ -1,5 +1,5 @@
 # Automatisiertes Refactoring in JS
-Dies ist ein Repo für ein Projekt im Rahmen einer Bachelor-Arbeit an der Universität Hamburg. Dabei werden mit dem Tool JSCodeShift verschiedene Refactorings vollautomatisch umgesetzt.
+Dies ist ein Repository für ein Projekt im Rahmen einer Bachelor-Arbeit an der Universität Hamburg. Dabei werden mit dem Tool JSCodeShift verschiedene Refactorings vollautomatisch umgesetzt.
 
 ## Codemods Starten
 ### JSCodeshift normal
