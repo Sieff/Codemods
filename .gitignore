@@ -144,6 +144,7 @@ dist
 
 # End of https://www.toptal.com/developers/gitignore/api/node
 .idea
+package-lock.json
 ./TestProjects/vue
 ./TestProjects/Vue3
 ./TestProjects/mithril
