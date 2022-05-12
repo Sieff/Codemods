@@ -2,7 +2,7 @@
  * Data class for a function or method.
  */
 class FunctionOrMethod {
-    constructor(node, name, params, body, isSingleReturn) {
+    constructor(node, name, params, body, isSingleReturn, isAsync) {
         this._node = node;
         this._name = name;
         this._params = params;
@@ -10,6 +10,7 @@ class FunctionOrMethod {
         this._isSingleReturn = isSingleReturn;
         this._isFunction = undefined;
         this._isMethod = undefined;
+        this._isAsync = isAsync;
     }
 
     get node() {
@@ -32,6 +33,10 @@ class FunctionOrMethod {
         return this._isSingleReturn;
     }
 
+    get isAsync() {
+        return this._isAsync;
+    }
+
     get isFunction() {
         return this._isFunction;
     }
@@ -45,8 +50,8 @@ class FunctionOrMethod {
  * Data class for a function.
  */
 export class FunctionData extends FunctionOrMethod {
-    constructor(node, name, params, body, isSingleReturn) {
-        super(node, name, params, body, isSingleReturn);
+    constructor(node, name, params, body, isSingleReturn, isAsync) {
+        super(node, name, params, body, isSingleReturn, isAsync);
         this._isFunction = true;
         this._isMethod = false;
     }
@@ -56,8 +61,8 @@ export class FunctionData extends FunctionOrMethod {
  * Data class for a method.
  */
 export class MethodData extends FunctionOrMethod {
-    constructor(node, name, params, body, isSingleReturn) {
-        super(node, name, params, body, isSingleReturn);
+    constructor(node, name, params, body, isSingleReturn, isAsync) {
+        super(node, name, params, body, isSingleReturn, isAsync);
         this._isFunction = false;
         this._isMethod = true;
     }

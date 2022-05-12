@@ -35,11 +35,11 @@ export class QueryModule {
         if (calledFunctionCollection.size() !== 0) {
             const node = calledFunctionCollection.get(0).node;
             return new FunctionData(node, node.id.name, node.params,
-                this.getFunctionBody(node), this.isFunctionSingleReturnStatement(node));
+                this.getFunctionBody(node), this.isFunctionSingleReturnStatement(node), node.async);
         } else {
             const node = calledMethodCollection.get(0).node;
             return new MethodData(node, node.key.name, node.value.params,
-                this.getMethodBody(node), this.isMethodSingleReturnStatement(node));
+                this.getMethodBody(node), this.isMethodSingleReturnStatement(node), node.value.async);
         }
     }
 
@@ -130,7 +130,9 @@ export class QueryModule {
         const { node } = nodePath;
         const callerArguments = this.arguments(node, !calledFunctionOrMethod.isSingleReturn);
         const functionParams = calledFunctionOrMethod.params;
-        assert(functionParams.length === callerArguments.length, "Arguments and Params don't match length.");
+        if (functionParams.length !== callerArguments.length) {
+            return false;
+        }
         return this.createParamToArgumentDict(functionParams, callerArguments);
     }
 

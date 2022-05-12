@@ -91,6 +91,11 @@ export default (fileInfo, api, options) => {
             return;
         }
 
+        // Is it async?
+        if (calledFunctionOrMethod.isAsync) {
+            return;
+        }
+
         // Get body and dictionary to map arguments to parameters
         const functionBodies = joinedCallCollection.paths().map(() => codemodService.queryModule.getFunctionOrMethodBody(calledFunctionOrMethod));
         const parentStatements = joinedCallCollection.map((call) => call.parent);
@@ -128,7 +133,7 @@ export default (fileInfo, api, options) => {
             j(node).find(j.Identifier).replaceWith((nodePath) => {
                 const { node } = nodePath;
 
-                if (paramToArgumentDicts[idx][node.name] && typeof paramToArgumentDicts[idx][node.name] !== 'function') {
+                if (paramToArgumentDicts[idx] && paramToArgumentDicts[idx][node.name] && typeof paramToArgumentDicts[idx][node.name] !== 'function') {
                     node.name = paramToArgumentDicts[idx][node.name];
                 }
 
