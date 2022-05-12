@@ -192,11 +192,13 @@ export class FileManagementModule {
         let possiblePolymorphDefinitions = 0;
         this._allFiles.forEach((file, idx) => {
             const currentAST = this._allASTs[idx];
-            possiblePolymorphDefinitions += currentAST.find(this._j.MethodDefinition, {
-                key: {
-                    name: calleeName
-                }
-            }).size();
+            if (currentAST) {
+                possiblePolymorphDefinitions += currentAST.find(this._j.MethodDefinition, {
+                    key: {
+                        name: calleeName
+                    }
+                }).size();
+            }
         });
         return possiblePolymorphDefinitions;
     }
