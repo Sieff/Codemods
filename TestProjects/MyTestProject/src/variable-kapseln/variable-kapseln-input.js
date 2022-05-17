@@ -10,7 +10,7 @@
  */
 
 class VariableKapselnInput {
-    constructor(field1, field2, field3, field4, field5, field6, field7) {
+    constructor(field1, field2, field3, field4, field5, field6, field7, field8) {
         // Testcases 1.: Variable direkt aufrufen
         this.field1 = field1;
         // Testcases 2.: Variable direkt aufrufen
@@ -24,7 +24,9 @@ class VariableKapselnInput {
         // Testcases 6.:
         this._field6 = field6;
         // Testcases 7.:
-        this.field7 = field7;
+        this._field7 = field7;
+        // Testcases 8.:
+        this.setField8 = field8;
     }
 
     set field1(value) {
@@ -61,6 +63,10 @@ class VariableKapselnInput {
 
     gField7() {
         return this._field7;
+    }
+
+    setField8(value) {
+        this._field8 = value;
     }
 
     usingTheFields() {
