@@ -42,6 +42,19 @@ export default (fileInfo, api, options) => {
             const assignmentSetter = j(classPath).find(j.MethodDefinition, {
                 key: {
                     name: assignedMember
+                },
+                value: {
+                    body: {
+                        body: [{
+                            expression: {
+                                left: {
+                                    object: {
+                                        type: 'ThisExpression'
+                                    }
+                                }
+                            }
+                        }]
+                    }
                 }
             });
 
@@ -68,18 +81,29 @@ export default (fileInfo, api, options) => {
                 }
             });
 
-            const assignmentHasSetter = assignmentInSetter.size() === 1;
+            const assignmentHasSetter = assignmentInSetter.size() === 1 && !assignmentIsSetter;
             const setterName = assignmentHasSetter ? assignmentInSetter.get(0).node.key.name : undefined;
 
             // Is the assignment also the name of a getter?
             const assignmentGetter = j(classPath).find(j.MethodDefinition, {
                 key: {
                     name: assignedMember
+                },
+                value: {
+                    body: {
+                        body: [{
+                            argument: {
+                                object: {
+                                    type: 'ThisExpression'
+                                }
+                            }
+                        }]
+                    }
                 }
             });
 
             const assignmentIsGetter = assignmentGetter.size() === 1;
-            const getterProperty = assignmentIsGetter ? assignmentGetter.get(0).node.value.body.body[0].argument.property.name : undefined;
+            let getterProperty = assignmentIsGetter ? assignmentGetter.get(0).node.value.body.body[0].argument.property.name : undefined;
 
             // Is the assignment also returned in a getter?
             const assignmentInGetter = j(classPath).find(j.MethodDefinition, {
@@ -99,10 +123,32 @@ export default (fileInfo, api, options) => {
                 }
             });
 
-            const assignmentHasGetter = assignmentInGetter.size() === 1;
-            const getterName = assignmentHasGetter ? assignmentInGetter.get(0).node.key.name : undefined;
+            const assignmentHasGetter = assignmentInGetter.size() === 1 && !assignmentIsGetter;
+            let getterName = assignmentHasGetter ? assignmentInGetter.get(0).node.key.name : undefined;
 
-            assignmentsData.push({assignedMember, assignmentHasGetter, assignmentIsGetter, assignmentHasSetter, assignmentIsSetter, setterName, setterProperty, getterName, getterProperty});
+            // Is there an independent Getter with the property of the Setter?
+            const independentGetter = j(classPath).find(j.MethodDefinition, {
+                value: {
+                    body: {
+                        body: [{
+                            argument: {
+                                object: {
+                                    type: 'ThisExpression'
+                                },
+                                property: {
+                                    name: setterProperty
+                                }
+                            }
+                        }]
+                    }
+                }
+            });
+
+            const assignmentHasIndependentGetter = independentGetter.size() === 1;
+            getterName = assignmentHasIndependentGetter ? independentGetter.get(0).node.key.name : getterName;
+            getterProperty = assignmentHasIndependentGetter ? independentGetter.get(0).node.value.body.body[0].argument.property.name : getterProperty;
+
+            assignmentsData.push({assignedMember, assignmentHasGetter, assignmentIsGetter, assignmentHasIndependentGetter, assignmentHasSetter, assignmentIsSetter, setterName, setterProperty, getterName, getterProperty});
         });
 
         assignmentsData.forEach((assignment, idx) => {
@@ -170,13 +216,18 @@ export default (fileInfo, api, options) => {
             }
 
             // When the assignment has a getter, don't use the getter within the class
-            if (assignment.assignmentHasGetter && !assignment.assignmentIsGetter && assignment.getterName) {
+            if (assignment.assignmentHasGetter && !assignment.assignmentIsGetter && !assignment.assignmentHasIndependentGetter && assignment.getterName) {
                 const getterName = assignment.getterName;
                 const propertyName = assignment.assignedMember;
                 replaceGettersWithMember(getterName, propertyName);
             }
-            if (!assignment.assignmentHasGetter && assignment.assignmentIsGetter && assignment.getterProperty) {
+            if (!assignment.assignmentHasGetter && assignment.assignmentIsGetter && !assignment.assignmentHasIndependentGetter && assignment.getterProperty) {
                 const getterName = assignment.assignedMember;
+                const propertyName = assignment.getterProperty;
+                replaceGettersWithMember(getterName, propertyName);
+            }
+            if (!assignment.assignmentHasGetter && !assignment.assignmentIsGetter && assignment.assignmentHasIndependentGetter && assignment.getterName && assignment.getterProperty) {
+                const getterName = assignment.getterName;
                 const propertyName = assignment.getterProperty;
                 replaceGettersWithMember(getterName, propertyName);
             }
