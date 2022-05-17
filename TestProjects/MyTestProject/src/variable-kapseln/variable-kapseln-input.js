@@ -7,6 +7,8 @@
  * 5. Ein Feld mit Getter und Setter, dass im Konstruktor direkt aufgerufen wird
  * 6. Ein Feld mit Setter, dass im Konstruktor direkt aufgerufen wird
  * 7. Ein Feld mit Getter und Setter, welche nicht mit get und set markiert sind
+ * 8. Ein Feld mit Setter, welcher nicht mit set markiert ist und wo das Feld im Konstruktor mit Setter aufgerufen wird
+ * 9. Ein Feld mit Getter und Setter, welche nicht mit get und set markiert sind und wo das Feld im Konstruktor mit Setter aufgerufen wird
  */
 
 class VariableKapselnInput {
@@ -27,6 +29,8 @@ class VariableKapselnInput {
         this._field7 = field7;
         // Testcases 8.:
         this.setField8 = field8;
+        // Testcases 9.:
+        this.setField9 = field8;
     }
 
     set field1(value) {
@@ -69,6 +73,15 @@ class VariableKapselnInput {
         this._field8 = value;
     }
 
+    setField9(value) {
+        this._field9 = value;
+    }
+
+    getField9() {
+        return this._field9;
+    }
+
+
     usingTheFields() {
         // Variable statt Setter direkt aufrufen
         this.field1 = 1;
@@ -81,8 +94,14 @@ class VariableKapselnInput {
         this.field5 = 5;
         // Variable statt Setter direkt aufrufen
         this.field6 = 6;
+        // Variable statt Setter direkt aufrufen
+        this.sField7 = 7;
+        // Variable statt Setter direkt aufrufen
+        this.setField8 = 8;
+        // Variable statt Setter direkt aufrufen
+        this.setField9 = 9;
 
         // Variablen direkt aufrufen
-        const someVariable = this.field1 + this._field1 + this._field2 + this.field3 + this._field3 + this._field4
+        const someVariable = this.field1 + this._field1 + this._field2 + this.field3 + this._field3 + this._field4 + this.gField7() + this.getField9()
     }
 }
