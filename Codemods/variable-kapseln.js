@@ -34,9 +34,12 @@ export default (fileInfo, api, options) => {
             // What member is assigned?
             const assignedMember = leftIsThisExpression ? assignmentExpression.left.property.name : undefined;
 
+            if (!assignedMember) {
+                return;
+            }
+
             // Is it a setter?
             const assignmentSetter = j(classPath).find(j.MethodDefinition, {
-                kind: 'set',
                 key: {
                     name: assignedMember
                 }
@@ -47,7 +50,6 @@ export default (fileInfo, api, options) => {
 
             // Is the assignment also in a setter?
             const assignmentInSetter = j(classPath).find(j.MethodDefinition, {
-                kind: 'set',
                 value: {
                     body: {
                         body: [{
@@ -71,7 +73,6 @@ export default (fileInfo, api, options) => {
 
             // Is the assignment also the name of a getter?
             const assignmentGetter = j(classPath).find(j.MethodDefinition, {
-                kind: 'get',
                 key: {
                     name: assignedMember
                 }
@@ -82,7 +83,6 @@ export default (fileInfo, api, options) => {
 
             // Is the assignment also returned in a getter?
             const assignmentInGetter = j(classPath).find(j.MethodDefinition, {
-                kind: 'get',
                 value: {
                     body: {
                         body: [{

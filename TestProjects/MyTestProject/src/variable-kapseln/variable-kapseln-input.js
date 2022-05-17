@@ -6,10 +6,11 @@
  * 4. Ein Feld ohne Getter und ohne Setter
  * 5. Ein Feld mit Getter und Setter, dass im Konstruktor direkt aufgerufen wird
  * 6. Ein Feld mit Setter, dass im Konstruktor direkt aufgerufen wird
+ * 7. Ein Feld mit Getter und Setter, welche nicht mit get und set markiert sind
  */
 
 class VariableKapselnInput {
-    constructor(field1, field2, field3, field4, field5, field6) {
+    constructor(field1, field2, field3, field4, field5, field6, field7) {
         // Testcases 1.: Variable direkt aufrufen
         this.field1 = field1;
         // Testcases 2.: Variable direkt aufrufen
@@ -22,6 +23,8 @@ class VariableKapselnInput {
         this._field5 = field5;
         // Testcases 6.:
         this._field6 = field6;
+        // Testcases 7.:
+        this.field7 = field7;
     }
 
     set field1(value) {
@@ -50,6 +53,14 @@ class VariableKapselnInput {
 
     set field6(value) {
         this._field6 = value;
+    }
+
+    sField7(value) {
+        this._field7 = value;
+    }
+
+    gField7() {
+        return this._field7;
     }
 
     usingTheFields() {
