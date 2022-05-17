@@ -34,7 +34,7 @@ export default (fileInfo, api, options) => {
                 currentIndex += 1;
                 current = statementBody[currentIndex];
             }
-            if (declarations.length >= 2 && loopTypes.find((type) => type === statementBody[currentIndex].type)) {
+            if (declarations.length >= 2 && currentIndex < statementBody.length && loopTypes.find((type) => type === statementBody[currentIndex].type)) {
                 const patternMatch = new LoopPatternMatch(declarations.map(declaration => declaration.declarations[0].id.name),
                     statementBody[currentIndex]);
                 patternMatches.push(patternMatch);
@@ -54,6 +54,10 @@ export default (fileInfo, api, options) => {
         // Look at the pattern matches to decide, whether to refactor
         patternMatches.forEach((patternMatch, idx) => {
             const loopBody = patternMatch.loop.body.body;
+
+            if (!loopBody) {
+                return;
+            }
 
             // Check if the amount of assignments in the loop is equal to the amount of declarations
             let assignmentsEqualDeclarations = true;
