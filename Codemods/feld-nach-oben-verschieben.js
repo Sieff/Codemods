@@ -29,6 +29,9 @@ export default (fileInfo, api, options) => {
 
         // Search in all files
         const ASTsWithSubClasses = codemodService.fileManagementModule.allASTs.map((currentAST) => {
+            if (!currentAST) {
+                return false;
+            }
 
             // Search for subclasses in the currentAST
             const subClassesInCurrentAST = currentAST.find(j.ClassDeclaration, {
