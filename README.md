@@ -6,7 +6,7 @@ Dies ist ein Repository für ein Projekt im Rahmen einer Bachelor-Arbeit an der 
 
   cd .\TestProjects\MyTestProject
   
-  jscodeshift .\src\funktion-inline-platzieren\funktion-inline-platzieren-input.js -t ..&#92;..&#92;Codemods\funktion-inline-platzieren.js
+  jscodeshift .\src\funktion-inline-platzieren\ -t ..&#92;..&#92;Codemods\funktion-inline-platzieren.js
 
 ### JSCodeShift debug Mode
 
