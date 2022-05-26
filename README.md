@@ -8,7 +8,7 @@ Dies ist ein Repository für ein Projekt im Rahmen einer Bachelor-Arbeit an der 
   
   jscodeshift .\src\funktion-inline-platzieren\ -t ..&#92;..&#92;Codemods\funktion-inline-platzieren.js
 
-### JSCodeShift debug Mode
+### JSCodeshift debug Mode
 
   cd .\TestProjects\MyTestProject 
   
